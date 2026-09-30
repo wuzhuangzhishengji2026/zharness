@@ -1,0 +1,50 @@
+{
+	"name": "zharness-web-next",
+	"private": true,
+	"version": "0.1.2",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc -b && vite build",
+		"preview": "vite preview",
+		"tauri": "tauri",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix"
+	},
+	"dependencies": {
+		"@zharness/protocol": "file:../../packages/protocol",
+		"@xterm/addon-fit": "^0.10.0",
+		"@xterm/xterm": "^5.5.0",
+		"@pxlkit/ui-kit": "^2.0.1",
+		"@tauri-apps/api": "^2.1.1",
+		"@tauri-apps/plugin-dialog": "^2.7.1",
+		"@tauri-apps/plugin-shell": "^2.0.1",
+		"clsx": "^2.1.1",
+		"i18next": "^26.3.6",
+		"lucide-react": "^0.469.0",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
+		"react-i18next": "^17.0.10",
+		"react-markdown": "^9.0.1",
+		"react-router-dom": "^6.28.0",
+		"remark-gfm": "^4.0.0",
+		"tailwind-merge": "^2.6.0"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.39.5",
+		"@tailwindcss/vite": "^4.3.2",
+		"@tauri-apps/cli": "^2.1.0",
+		"@types/node": "^22.10.5",
+		"@types/react": "^18.3.12",
+		"@types/react-dom": "^18.3.1",
+		"@vitejs/plugin-react": "^4.3.4",
+		"eslint": "^9.39.5",
+		"eslint-plugin-react-hooks": "^5.2.0",
+		"eslint-plugin-react-refresh": "^0.4.26",
+		"globals": "^15.15.0",
+		"tailwindcss": "^4.3.2",
+		"typescript": "^5.7.3",
+		"typescript-eslint": "^8.64.0",
+		"vite": "^6.0.3"
+	}
+}

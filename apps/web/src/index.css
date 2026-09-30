@@ -1,0 +1,238 @@
+@import "tailwindcss";
+@import "@pxlkit/ui-kit/styles.css";
+
+@source "../node_modules/@pxlkit/ui-kit";
+@source "../node_modules/@pxlkit/core";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+	--color-bg: var(--bg);
+	--color-surface: var(--surface);
+	--color-surface-2: var(--surface-2);
+	--color-surface-3: var(--surface-3);
+	--color-border: var(--border);
+	--color-fg: var(--fg);
+	--color-muted: var(--muted);
+	--color-accent: var(--accent);
+	--color-accent-fg: var(--accent-fg);
+	--color-success: var(--success);
+	--color-warning: var(--warning);
+	--color-danger: var(--danger);
+
+	--font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+		"Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+	--font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* 主题色板对齐「看板高保真0907」设计稿(从 MeaXure spec 提取的精确值):
+   浅色: 侧栏/凹陷 #F9FAFB, 主区/卡片 #FFFFFF, 看板列/输入框 #F0F1F6, 边框 #E7E7F2,
+         正文 #333333, 主色 #0084FF。
+   深色: 侧栏/窗口 #0B0B0D, 主区 #1A1A1F, 看板列/输入框 #0B0B0E, 卡片 #1F1F1F + 边框 #34343C,
+         侧栏选中行 #303137, 正文 #EEEEEE, 弱化 #A1A1A1, 主色同为 #0084FF。 */
+:root {
+	color-scheme: light;
+	--bg: #f9fafb;
+	--surface: #ffffff;
+	--surface-2: #f0f1f6;
+	--surface-3: #ffffff;
+	--border: #e7e7f2;
+	--fg: #333333;
+	--muted: #8a8f99;
+	--accent: #0084ff;
+	--accent-fg: #ffffff;
+	--success: #009e4e;
+	--warning: #ff9300;
+	--danger: #cf0000;
+	/* 首页欢迎态顶部蓝色径向光晕(设计稿: #1D2AFE/0.10 → transparent)。 */
+	--welcome-glow: rgba(29, 42, 254, 0.1);
+}
+
+.dark {
+	color-scheme: dark;
+	--bg: #0b0b0d;
+	--surface: #1a1a1f;
+	--surface-2: #0b0b0e;
+	--surface-3: #303137;
+	--border: #34343c;
+	--fg: #eeeeee;
+	--muted: #a1a1a1;
+	--accent: #0084ff;
+	--accent-fg: #ffffff;
+	--success: #00cc6a;
+	--warning: #ff9300;
+	--danger: #ff0008;
+	--welcome-glow: rgba(29, 42, 254, 0.12);
+}
+
+@layer base {
+	html,
+	body,
+	#root {
+		height: 100%;
+	}
+	body {
+		background: var(--color-bg);
+		color: var(--color-fg);
+		font-family: var(--font-sans);
+		-webkit-font-smoothing: antialiased;
+		text-rendering: optimizeLegibility;
+	}
+	::selection {
+		background: color-mix(in srgb, var(--accent) 25%, transparent);
+	}
+}
+
+/* Hide scrollbar while keeping the element scrollable. */
+.scrollbar-hide {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
+}
+
+/* Scrollbar — kept outside @layer base so it isn't overridden by Tailwind utilities */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--border) var(--bg);
+}
+*::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+	background: var(--bg);
+	-webkit-appearance: none;
+}
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track-piece,
+*::-webkit-scrollbar-corner {
+	background: var(--bg);
+	-webkit-appearance: none;
+}
+*::-webkit-scrollbar-thumb {
+	background: var(--border);
+	border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+	background: var(--muted);
+}
+
+/* Dark mode — explicit overrides to guarantee no white bleed in WKWebView */
+.dark,
+.dark * {
+	scrollbar-color: #34343c #0b0b0d;
+}
+.dark::-webkit-scrollbar,
+.dark *::-webkit-scrollbar,
+.dark::-webkit-scrollbar-track,
+.dark *::-webkit-scrollbar-track,
+.dark::-webkit-scrollbar-track-piece,
+.dark *::-webkit-scrollbar-track-piece,
+.dark::-webkit-scrollbar-corner,
+.dark *::-webkit-scrollbar-corner {
+	background: #0b0b0d;
+}
+.dark::-webkit-scrollbar-thumb,
+.dark *::-webkit-scrollbar-thumb {
+	background: #34343c;
+}
+.dark::-webkit-scrollbar-thumb:hover,
+.dark *::-webkit-scrollbar-thumb:hover {
+	background: #a1a1a1;
+}
+
+@layer components {
+	[data-tauri-drag-region] {
+		-webkit-app-region: drag;
+	}
+	[data-tauri-drag-region] button,
+	[data-tauri-drag-region] a,
+	[data-tauri-drag-region] input,
+	[data-tauri-drag-region] [data-no-drag] {
+		-webkit-app-region: no-drag;
+	}
+
+	.card {
+		background: var(--surface);
+		border: 1px solid var(--border);
+		border-radius: 0.75rem;
+	}
+	.label {
+		margin-bottom: 0.375rem;
+		display: block;
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: var(--muted);
+	}
+}
+
+/* Markdown-rendered content (agent responses) */
+.md {
+	font-size: 0.875rem;
+	line-height: 1.65;
+	color: var(--fg);
+	word-break: break-word;
+	overflow-wrap: anywhere;
+}
+.md > *:first-child { margin-top: 0; }
+.md > *:last-child { margin-bottom: 0; }
+.md p { margin: 0.6em 0; }
+.md h1, .md h2, .md h3, .md h4 {
+	font-family: var(--font-sans);
+	font-weight: 700;
+	line-height: 1.3;
+	margin: 1.1em 0 0.5em;
+	letter-spacing: 0;
+}
+.md h1 { font-size: 1.35em; }
+.md h2 { font-size: 1.2em; }
+.md h3 { font-size: 1.05em; }
+.md h4 { font-size: 0.95em; }
+.md ul, .md ol { margin: 0.6em 0; padding-left: 1.4em; }
+.md ul { list-style: disc; }
+.md ol { list-style: decimal; }
+.md li { margin: 0.25em 0; }
+.md li > ul, .md li > ol { margin: 0.25em 0; }
+.md a { color: var(--accent); }
+.md strong { font-weight: 700; }
+.md em { font-style: italic; }
+.md hr { border: 0; border-top: 1px solid var(--border); margin: 1.2em 0; }
+.md blockquote {
+	border-left: 3px solid var(--border);
+	padding: 0.1em 0 0.1em 1em;
+	margin: 0.8em 0;
+	color: var(--muted);
+}
+.md table {
+	border-collapse: collapse;
+	margin: 0.8em 0;
+	display: block;
+	overflow-x: auto;
+	font-size: 0.85em;
+}
+.md th, .md td {
+	border: 1px solid var(--border);
+	padding: 0.4em 0.7em;
+	text-align: left;
+}
+.md th { background: var(--surface-2); font-weight: 700; }
+.md img { max-width: 100%; border-radius: 0.5rem; }
+
+/* Personified GUI additions — line-clamp utility (used by PersonaCard) and
+   compact markdown styling for the user-memory card inside the sidebar. */
+.line-clamp-2 {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.line-clamp-3 {
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.prose-persona p { margin: 0.3em 0; }
+.prose-persona ul { margin: 0.3em 0; padding-left: 1.1em; list-style: disc; }
+.prose-persona li { margin: 0.1em 0; }
+.prose-persona strong { color: var(--fg); }

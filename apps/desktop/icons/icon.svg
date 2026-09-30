@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 260 260" fill="none">
+  <!-- 角 -->
+  <rect x="15.5" y="126.5" width="80" height="7" rx="3.5" fill="#d97757" />
+  <!-- 头 -->
+  <rect x="91.5" y="92" width="9" height="76" rx="4.5" fill="#d97757" opacity="0.9" />
+  <!-- 身体 -->
+  <rect x="109.5" y="76" width="9" height="108" rx="4.5" fill="#d97757" />
+  <rect x="127.5" y="64" width="9" height="132" rx="4.5" fill="#d97757" />
+  <rect x="145.5" y="56" width="9" height="148" rx="4.5" fill="#d97757" />
+  <rect x="163.5" y="64" width="9" height="132" rx="4.5" fill="#d97757" />
+  <rect x="181.5" y="76" width="9" height="108" rx="4.5" fill="#d97757" />
+  <!-- 尾 -->
+  <rect x="199.5" y="90" width="9" height="80" rx="4.5" fill="#d97757" opacity="0.8" />
+  <rect x="217.5" y="104" width="9" height="52" rx="4.5" fill="#d97757" opacity="0.6" />
+  <!-- 尾鳍 -->
+  <rect x="235.5" y="90" width="9" height="28" rx="4.5" fill="#d97757" opacity="0.45" />
+  <rect x="235.5" y="142" width="9" height="28" rx="4.5" fill="#d97757" opacity="0.45" />
+</svg>

@@ -1,0 +1,60 @@
+{
+  "brand": "ZHarness",
+  "pages": [
+    {
+      "file": "README.md",
+      "nav": "文档索引",
+      "group": "入门"
+    },
+    {
+      "file": "01-项目概览.md",
+      "nav": "项目概览",
+      "group": "入门"
+    },
+    {
+      "file": "02-架构总览.md",
+      "nav": "架构总览",
+      "group": "架构与核心"
+    },
+    {
+      "file": "03-Reactor循环.md",
+      "nav": "Reactor 循环",
+      "group": "架构与核心"
+    },
+    {
+      "file": "04-事件存储与会话树.md",
+      "nav": "事件存储与会话树",
+      "group": "架构与核心"
+    },
+    {
+      "file": "05-CLI工具注册表.md",
+      "nav": "CLI 工具注册表",
+      "group": "架构与核心"
+    },
+    {
+      "file": "06-运行模式与界面.md",
+      "nav": "运行模式与界面",
+      "group": "界面与集成"
+    },
+    {
+      "file": "07-RPC与桌面端.md",
+      "nav": "RPC 与桌面端",
+      "group": "界面与集成"
+    },
+    {
+      "file": "08-持久化Agent与扩展.md",
+      "nav": "持久化 Agent 与扩展",
+      "group": "界面与集成"
+    },
+    {
+      "file": "09-开发指南.md",
+      "nav": "开发指南",
+      "group": "工程实践"
+    },
+    {
+      "file": "10-SOP市场与动态工作流.md",
+      "nav": "SOP 市场与动态工作流",
+      "group": "界面与集成"
+    }
+  ]
+}

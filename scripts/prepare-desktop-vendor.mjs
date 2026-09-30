@@ -1,0 +1,90 @@
+#!/usr/bin/env node
+/**
+ * Stage only the current platform-arch's vendor binaries (fd/rg) into
+ * apps/desktop/vendor-bin/ so tauri bundles just that one instead of all
+ * 6 platforms (~46M -> ~7M on macOS arm64).
+ *
+ * Runtime lookup is `vendor/bin/${process.platform}-${process.arch}/<tool>`
+ * (see src/utils/tools-manager.ts), so only that subdirectory is needed.
+ */
+import { spawnSync } from "node:child_process";
+import { chmodSync, copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+// fs.cpSync(recursive) crashes with STATUS_STACK_BUFFER_OVERRUN (0xC0000409)
+// on Node 24.x / Windows for these directories, so copy manually.
+function copyDir(src, dest) {
+	mkdirSync(dest, { recursive: true });
+	for (const entry of readdirSync(src, { withFileTypes: true })) {
+		const s = path.join(src, entry.name);
+		const d = path.join(dest, entry.name);
+		if (entry.isDirectory()) copyDir(s, d);
+		else if (entry.isFile()) copyFileSync(s, d);
+	}
+}
+
+const repoRoot = fileURLToPath(new URL("..", import.meta.url));
+const srcRoot = path.join(repoRoot, "dist", "vendor", "bin");
+const stagingRoot = path.join(repoRoot, "apps", "desktop", "vendor-bin");
+
+const key = `${process.platform}-${process.arch}`;
+const srcDir = path.join(srcRoot, key);
+
+if (!existsSync(srcDir)) {
+	console.error(`prepare-desktop-vendor: source not found: ${srcDir}`);
+	console.error(`  Did you run 'npm run vendor-tools' first?`);
+	process.exit(1);
+}
+
+// Reset staging dir.
+rmSync(stagingRoot, { recursive: true, force: true });
+mkdirSync(stagingRoot, { recursive: true });
+
+// Copy the single platform-arch subdir preserving the layout tauri bundles.
+// tauri.conf.json maps: "vendor-bin/": "vendor/bin/"
+// so we want stagingRoot/<key>/{fd,rg}.
+copyDir(srcDir, path.join(stagingRoot, key));
+
+// Also stage node-pty prebuilds (pty.node + spawn-helper) for the Terminal PTY.
+// Runtime lookup is binDir/prebuilds/<key>/ (see packages/pty/unix-pty.ts),
+// and tauri.conf.json maps "prebuilds-bin/": "prebuilds/".
+const ptySrc = path.join(repoRoot, "node_modules", "node-pty", "prebuilds", key);
+const ptyStage = path.join(repoRoot, "apps", "desktop", "prebuilds-bin", key);
+const ptyBuildSrc = path.join(repoRoot, "node_modules", "node-pty", "build", "Release");
+const prebuildsRoot = path.join(repoRoot, "apps", "desktop", "prebuilds-bin");
+rmSync(prebuildsRoot, { recursive: true, force: true });
+mkdirSync(prebuildsRoot, { recursive: true });
+if (existsSync(ptySrc)) {
+	copyDir(ptySrc, ptyStage);
+	// spawn-helper must be executable.
+	try { chmodSync(path.join(ptyStage, "spawn-helper"), 0o755); } catch { /* ignore */ }
+	console.log(`prepare-desktop-vendor: staged node-pty prebuilds ${key} -> apps/desktop/prebuilds-bin/${key}`);
+} else if (existsSync(path.join(ptyBuildSrc, "pty.node"))) {
+	// node-pty doesn't ship prebuilds for Linux; fall back to the node-gyp
+	// build output in build/Release/pty.node.
+	mkdirSync(ptyStage, { recursive: true });
+	copyFileSync(path.join(ptyBuildSrc, "pty.node"), path.join(ptyStage, "pty.node"));
+	// node-pty's binding.gyp only builds spawn-helper on macOS, so compile
+	// it here for Linux from the bundled source.
+	const spawnHelperSrc = path.join(repoRoot, "node_modules", "node-pty", "src", "unix", "spawn-helper.cc");
+	const spawnHelperOut = path.join(ptyStage, "spawn-helper");
+	if (existsSync(spawnHelperSrc)) {
+		try {
+			const result = spawnSync("c++", ["-o", spawnHelperOut, spawnHelperSrc], { stdio: "pipe" });
+			if (result.status === 0) {
+				chmodSync(spawnHelperOut, 0o755);
+				console.log(`prepare-desktop-vendor: compiled spawn-helper for ${key}`);
+			} else {
+				console.warn(`prepare-desktop-vendor: WARNING failed to compile spawn-helper (c++ exited ${result.status})`);
+			}
+		} catch {
+			console.warn(`prepare-desktop-vendor: WARNING c++ not available, spawn-helper not compiled for ${key}`);
+		}
+	}
+	console.log(`prepare-desktop-vendor: staged node-pty (from source build) ${key} -> apps/desktop/prebuilds-bin/${key}`);
+} else {
+	console.warn(`prepare-desktop-vendor: WARNING node-pty prebuilds not found at ${ptySrc}`);
+}
+
+console.log(`prepare-desktop-vendor: staged ${key} -> ${path.relative(repoRoot, stagingRoot)}/${key}`);

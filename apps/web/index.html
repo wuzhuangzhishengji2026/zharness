@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>ZHarness</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<script>
+			(function () {
+				try {
+					var saved = localStorage.getItem("zharness-theme");
+					if (saved === "dark") {
+						document.documentElement.classList.add("dark");
+					}
+					var fontSize = localStorage.getItem("zharness-font-size");
+					var px = { small: 14, standard: 16, large: 18 }[fontSize];
+					if (px) {
+						document.documentElement.style.fontSize = px + "px";
+					}
+				} catch (e) {}
+			})();
+		</script>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script type="module" src="/src/main.tsx"></script>
+	</body>
+</html>

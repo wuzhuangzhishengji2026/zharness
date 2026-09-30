@@ -1,0 +1,70 @@
+{
+    "$schema":  "https://schema.tauri.app/config/2",
+    "productName":  "ZHarness",
+    "version":  "0.1.13",
+    "identifier":  "ai.zharness.gui",
+    "build":  {
+                  "beforeDevCommand":  {
+                                           "script":  "bun run dev",
+                                           "cwd":  "../web"
+                                       },
+                  "devUrl":  "http://127.0.0.1:1421",
+                  "beforeBuildCommand":  {
+                                             "script":  "bun run build",
+                                             "cwd":  "../web"
+                                         },
+                  "frontendDist":  "../web/dist"
+              },
+    "app":  {
+                "windows":  [
+                                {
+                                    "title":  "ZHarness",
+                                    "width":  1200,
+                                    "height":  800,
+                                    "minWidth":  720,
+                                    "minHeight":  480,
+                                    "resizable":  true,
+                                    "titleBarStyle":  "Overlay",
+                                    "hiddenTitle":  true,
+                                    "trafficLightPosition":  {
+                                                                 "x":  14,
+                                                                 "y":  21
+                                                             },
+                                    "backgroundColor":  [
+                                                            18,
+                                                            18,
+                                                            18,
+                                                            255
+                                                        ]
+                                }
+                            ],
+                "security":  {
+                                 "csp":  "default-src \u0027self\u0027; img-src \u0027self\u0027 data:; style-src \u0027self\u0027 \u0027unsafe-inline\u0027 https://fonts.googleapis.com; font-src \u0027self\u0027 https://fonts.gstatic.com; script-src \u0027self\u0027 \u0027unsafe-inline\u0027 \u0027unsafe-eval\u0027; connect-src \u0027self\u0027 ipc: http://ipc.localhost ws://127.0.0.1:* http://127.0.0.1:* https://skills.sh https://www.skills.sh"
+                             }
+            },
+    "bundle":  {
+                   "active":  true,
+                   "targets": "all",
+                   "icon":  [
+                                "icons/32x32.png",
+                                "icons/128x128.png",
+                                "icons/128x128@2x.png",
+                                "icons/icon.icns",
+                                "icons/icon.ico"
+                            ],
+                   "resources":  {
+                                     "../../dist/theme/":  "theme/",
+                                     "../../dist/assets/":  "assets/",
+                                     "../../dist/export-html/":  "export-html/",
+                                     "../../dist/codegen-sma/":  "codegen-sma/",
+                                     "../../dist/replay/":  "replay/",
+                                     "../../dist/builtin-sops/":  "builtin-sops/",
+                                     "../../dist/builtin-skills/":  "builtin-skills/",
+                                     "vendor-bin/":  "vendor/bin/",
+                                     "prebuilds-bin/":  "prebuilds/",
+                                     "../../dist/package.json":  "package.json",
+                                     "../../dist/providers.json":  "providers.json",
+                                     "../../dist/photon_rs_bg.wasm":  "photon_rs_bg.wasm"
+                                 }
+               }
+}

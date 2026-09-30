@@ -1,0 +1,35 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "Node16",
+		"lib": ["ES2022"],
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"declaration": true,
+		"declarationMap": false,
+		"sourceMap": false,
+		"inlineSources": false,
+		"inlineSourceMap": false,
+		"moduleResolution": "Node16",
+		"resolveJsonModule": true,
+		"allowImportingTsExtensions": false,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
+		"useDefineForClassFields": false,
+		"types": ["node"],
+		"outDir": "./dist",
+		"rootDir": ".",
+		"baseUrl": ".",
+		"paths": {
+			"@zharness/protocol": ["./packages/protocol/index.ts"],
+			"@zharness/http-bridge": ["./packages/http-bridge/server.ts"],
+			"@zharness/rpc": ["./packages/rpc/rpc-mode.ts"],
+			"@zharness/tui": ["./packages/tui/interactive-mode.ts"],
+			"@zharness/cli": ["./packages/cli/args.ts"]
+		}
+	},
+	"include": ["src/**/*.ts", "packages/protocol/index.ts", "packages/http-bridge/server.ts", "packages/rpc/*.ts", "packages/tui/**/*.ts", "packages/cli/*.ts"],
+	"exclude": ["node_modules", "dist", "**/*.d.ts", "src/**/*.d.ts", "src/builtin-sops/**"]
+}

@@ -1,0 +1,70 @@
+# 知识检索约束配置
+# 此配置可被 stage2 读取，也支持在项目 KnowledgeBase/config/ 下覆盖
+
+# ============================================================
+# 通用检索约束
+# ============================================================
+
+# ============================================================
+# C++ 接口完整性校验约束
+# ============================================================
+cpp_interface_validation:
+  # 必须校验的项
+  required_checks:
+    - "header_file"        # 头文件是否存在
+    - "library_file"       # 动态库/静态库是否存在
+    - "interface_name"     # 接口名是否正确
+    - "parameter_list"     # 参数列表是否完整
+    - "return_type"        # 返回类型是否正确
+    - "interface_desc"     # 接口描述是否清晰
+
+  # 头文件搜索路径（相对于项目根目录）
+  header_search_paths:
+    - "include/"
+    - "include/modules/"
+    - "src/"
+
+  # 动态库搜索路径（相对于项目根目录或编译产物目录）
+  library_search_paths:
+    - "build/lib/"
+    - "lib/"
+    - "lib/linux/"
+    - "lib/win64/"
+
+  # 动态库命名规则
+  # C++: lib{name}.so / lib{name}.a / {name}.dll / {name}.lib
+  library_naming:
+    so_prefix: "lib"
+    so_suffix: ".so"
+    a_suffix: ".a"
+    dll_prefix: ""
+    dll_suffix: ".dll"
+    lib_suffix: ".lib"
+
+  # 接口描述必须包含的字段
+  required_interface_fields:
+    - "description"       # 功能描述
+    - "params"            # 参数说明
+    - "return"            # 返回值说明
+    - "example"           # 调用示例（可选）
+
+# ============================================================
+# 准确性确认规则
+# ============================================================
+accuracy_confirmation:
+  # 以下情况必须向用户确认（不要自行假设）
+  must_confirm_when:
+    - "参数默认值不确定"
+    - "参数取值范围不确定"
+    - "接口返回值含义不确定"
+    - "头文件路径不确定"
+    - "库文件版本不匹配"
+    - "多个候选结果无法确定选择"
+    - "检索到的信息相互矛盾"
+
+  # 以下情况可以直接使用（无需确认）
+  can_use_directly_when:
+    - "接口定义与知识库完全一致"
+    - "已有明确的使用示例可参考"
+    - "参数名和类型与文档完全匹配"
+    - "头文件和动态库路径明确存在"

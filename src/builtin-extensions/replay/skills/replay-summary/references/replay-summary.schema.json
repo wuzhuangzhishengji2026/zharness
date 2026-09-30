@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://dsh.local/skills/replay-summary/schema.json",
+  "title": "DSH 研发任务回放摘要 replay-summary.json (schema 2.0)",
+  "description": "「回放新版」插件唯一数据源。两层模型：Task ─ Phase[]（业务阶段 + 累计真实耗时）与 Timeline[]（真实执行顺序，每轮含 steps/artifacts/metrics；轮次类型 normal / rollback / reentry）。数组顺序即回放顺序，无分支流程引擎。schemaVersion 固定为 2.0。",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["phases", "timeline"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "2.0", "description": "标识 v2 模型；旧版（1.x）摘要不兼容，请用本技能 v2 重新生成" },
+    "conversationId": { "type": "string", "description": "建议填会话目录名（sessionId）" },
+    "task": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "result": { "type": "string", "description": "completed / failed 等，仅作展示徽标" },
+        "summary": { "type": "string", "description": "一句话任务小结" }
+      }
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 1,
+      "description": "业务阶段列表（数组顺序 = 业务顺序，顶部阶段条按其展示）。一个业务阶段可被执行多轮（timeline 中多次出现），actualDuration 为该阶段所有轮次真实耗时之和",
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "string", "description": "业务阶段 id，被 timeline[].phaseId 引用" },
+          "name": { "type": "string", "description": "如 需求分析 / 方案设计 / 开发实现 / 测试验证，动态生成不写死" },
+          "actualDuration": { "type": "number", "exclusiveMinimum": 0, "description": "该业务阶段真实累计耗时（毫秒），只用于展示（如 4小时12分 = 首轮3小时12分 + 返工1小时）" }
+        }
+      }
+    },
+    "timeline": {
+      "type": "array",
+      "minItems": 1,
+      "description": "真实执行顺序。记录什么顺序就按什么顺序播放。每轮节点包含本轮的 steps / artifacts / metrics，轮与轮之间互不累加（右侧随轮次整体刷新）",
+      "items": {
+        "type": "object",
+        "required": ["id", "phaseId", "type", "steps"],
+        "properties": {
+          "id": { "type": "string", "description": "轮次 id，如 run-01" },
+          "phaseId": { "type": "string", "description": "指向 phases[].id（业务阶段）" },
+          "type": { "type": "string", "enum": ["normal", "rollback", "reentry"], "description": "normal=正常进入；rollback=从后续阶段返回此前阶段（顶部高亮回退 + 短暂提示）；reentry=修改完成后重新进入阶段" },
+          "fromPhaseId": { "type": "string", "description": "rollback 时来自哪个业务阶段（可选）" },
+          "transitionMessage": { "type": "string", "description": "进入本轮的短暂提示语，如「测试发现3个问题，返回开发修改」「代码修复完成，重新进入测试验证」" },
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["id", "name"],
+              "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string", "minLength": 1, "description": "步骤名称，如 编写布局算法" },
+                "description": { "type": "string", "description": "一句话说明该步做了什么（主卡片上显示，控制在一行左右）" },
+                "status": { "type": "string", "enum": ["success", "failed", "confirmed"], "description": "success=已完成（绿✓）；failed=失败（红✕，失败后回放继续不停止）；confirmed=人工确认（独立状态「已确认」）" },
+                "tags": { "type": "array", "items": { "type": "string" }, "description": "输入/调用标签（主卡片 chips）：用户需求/项目知识/设计规则/工程源码/源码检索/代码开发Skill/远程编译Skill/测试环境/测试日志/人工确认 等" },
+                "inputs": { "type": "array", "items": { "type": "string" }, "description": "展开详情：输入（材料/知识）" },
+                "calls": { "type": "array", "items": { "type": "string" }, "description": "展开详情：调用（知识库/Skill/工具）" },
+                "outputs": { "type": "array", "items": { "type": "string" }, "description": "展开详情：输出要点" },
+                "artifactIds": { "type": "array", "items": { "type": "string" }, "description": "该步完成后产出的 artifact id（引用同一轮 artifacts，右侧随步骤完成逐个出现）" },
+                "replayDuration": { "type": "number", "exclusiveMinimum": 0, "description": "该步动画停留毫秒（可选，缺省约 3000；不属于真实耗时，页面上不展示）" }
+              }
+            }
+          },
+          "artifacts": {
+            "type": "array",
+            "description": "本轮阶段产出（卡片），最多 3 个为宜；文档/code/diff/report/log 均支持点击查看文件",
+            "items": {
+              "type": "object",
+              "required": ["id", "name", "type"],
+              "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string", "minLength": 1 },
+                "type": { "type": "string", "enum": ["document", "code", "diff", "report", "log", "image", "other"] },
+                "path": { "type": "string", "description": "会话目录内相对路径（一般 artifacts/…）；目录型以 / 结尾；文件不存在时卡片保留、点击提示" },
+                "description": { "type": "string", "description": "一行说明" }
+              }
+            }
+          },
+          "metrics": {
+            "type": "array",
+            "description": "本轮数据结果（四宫格数字卡片），最多 4 个；无则隐藏该区域",
+            "items": {
+              "type": "object",
+              "required": ["name", "value"],
+              "properties": {
+                "name": { "type": "string", "description": "指标名，如 测试用例 / 发现问题 / 最终通过" },
+                "value": { "type": ["string", "number"], "description": "大数字文本，如 17个 / 3个 / 100% / 82%" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

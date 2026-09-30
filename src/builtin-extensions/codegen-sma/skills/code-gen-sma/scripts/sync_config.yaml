@@ -1,0 +1,9 @@
+# 远程 Linux 编译服务器配置（请按实际环境填写）
+# 优先级：命令行参数 > build-env.yaml > 本文件 > 默认值
+# build-env.yaml 路径（相对本文件所在目录，或绝对路径）
+build_env_path: "../config/build-env.yaml"
+remote_host: ""          # SSH 主机名或 IP（留空则从 build-env.yaml 读取 remote_host）
+remote_user: ""          # SSH 用户名（留空则从 build-env.yaml 读取 remote_user）
+remote_port: 22          # SSH 端口（留空则从 build-env.yaml 读取 remote_port）
+remote_base_path: ""     # 远程根目录（留空则从 build-env.yaml 读取 remote_path + /test）
+ssh_key: ""              # SSH 私钥路径（留空则用默认 ~/.ssh/id_rsa）

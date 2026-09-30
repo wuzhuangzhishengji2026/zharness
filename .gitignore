@@ -1,0 +1,89 @@
+*.bun-build
+.DS_Store
+node_modules/
+dist/
+*.log
+.DS_Store
+*.tsbuildinfo
+# Ignore all .target directories
+*/.target/
+# packages/*/node_modules/
+packages/*/dist/
+packages/*/dist-chrome/
+packages/*/dist-firefox/
+*.cpuprofile
+*.tgz
+
+# Environment
+.env
+package
+
+# Editor files
+.vscode/
+.zed/
+.idea/
+*.swp
+*.swo
+*~
+
+# Package specific
+.npm/
+coverage/
+.nyc_output/
+.zharness_config/
+tui-debug.log
+compaction-results/
+.opencode/
+syntax.jsonl
+out.jsonl
+pi-*.html
+out.html
+packages/coding-agent/binaries/
+todo.md
+plans/
+.zharness/hf-sessions/
+.zharness/hf-sessions-backup/
+collect.sh
+
+# Downloaded vendor tool archives
+.vendor-tools/
+# codegen-sma runtime pipeline state (checkpoints for /codegen resume)
+.codegen/
+# Staged platform-specific vendor binaries for desktop bundle
+/apps/desktop/vendor-bin/
+/apps/desktop/prebuilds-bin/
+/apps/desktop/target/
+docs/
+
+# Local AI agent / Claude convention files (kept on disk for the local
+# tooling to read, but never tracked or pushed to PRs)
+/AGENTS.md
+/CLAUDE.md
+/.claude/
+
+# Local working / scratch files
+*.lnk
+zharness-*.zip
+test-builtin-cli-tmp/
+test-settings-bug-tmp/
+test-settings-tmp/
+apps/desktop/icons/ico-largest.png
+apps/desktop/icons/icon-preview.jpg
+CODE_WIKI.md
+REVIEW.md
+# Windows reserved-name artifact from PowerShell >NUL redirection
+nul
+# Editor backup files
+*.pre-mea.bak
+*.bak
+# Local scratch / working files
+/.shots/
+/.workbuddy/
+apps/web/dist.bak.*
+apps/web/*.7z
+# Generated review/inventory snapshots (session scratch, not project docs)
+/out/
+# Local debug probe script (model-registry inspection during debugging)
+probe-ignored.txt
+# Local highlights-report scratch (slides + screenshots, not project docs)
+/亮点汇报/
