@@ -32,7 +32,7 @@ ZHarness 是一个**事件驱动**的编码 Agent：每一次对话、每一次�
 
 ```bash
 # 从源码安装 CLI
-git clone https://github.com/tomsun28/zharness.git
+git clone https://github.com/wuzhuangzhishengji2026/zharness.git
 cd zharness
 npm install
 npm run build

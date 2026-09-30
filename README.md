@@ -32,7 +32,7 @@ ZHarness is an **event-driven** coding agent: every conversation turn, tool call
 
 ```bash
 # Install the CLI from source
-git clone https://github.com/tomsun28/zharness.git
+git clone https://github.com/wuzhuangzhishengji2026/zharness.git
 cd zharness
 npm install
 npm run build

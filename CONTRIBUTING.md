@@ -5,7 +5,7 @@ Thanks for your interest in contributing!
 ## Development setup
 
 ```bash
-git clone https://github.com/tomsun28/zharness.git
+git clone https://github.com/wuzhuangzhishengji2026/zharness.git
 cd zharness
 npm install
 npm run dev          # tsc watch build of the agent core
@@ -14,6 +14,18 @@ npm test             # offline test suite
 
 - Node.js ≥ 22.5 is required; the desktop app additionally needs Rust (Tauri 2) and Bun.
 - `npm run dev:web` runs the web frontend; `npm run dev:desktop` runs the Tauri desktop app.
+
+### Windows notes
+
+- Building the desktop app from Git Bash needs the MSVC environment; use the bundled
+  wrapper: `scripts/with-msvc.bat npm run build:desktop`.
+- If linking fails because rustc picks up Git's `/usr/bin/link.exe` (error: `extra operand`),
+  pin the MSVC linker for this machine in `apps/desktop/.cargo/config.toml`:
+
+  ```toml
+  [target.x86_64-pc-windows-msvc]
+  linker = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\<version>\\bin\\Hostx64\\x64\\link.exe"
+  ```
 
 ## Submitting changes
 
