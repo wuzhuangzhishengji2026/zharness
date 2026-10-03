@@ -38,8 +38,10 @@ import {
 	createProactiveAssistantExtension,
 } from "./proactive-assistant/index.js";
 import { REPLAY_EXTENSION_ID, createReplayExtension, installReplaySkill } from "./replay/index.js";
+import { SKINS_EXTENSION_ID, createSkinsExtension } from "./skins/index.js";
 import { SOP_MARKET_EXTENSION_ID, createSopMarketExtension } from "./sop-market/index.js";
 import { TASK_BOARD_EXTENSION_ID, createTaskBoardExtension } from "./task-board/index.js";
+import { PETS_EXTENSION_ID, createPetsExtension } from "./pets/index.js";
 
 /** Result of an install/uninstall lifecycle action. */
 export interface ExtensionLifecycleResult {
@@ -141,6 +143,24 @@ export const BUILTIN_EXTENSIONS: readonly BuiltinExtension[] = [
 			"渲染成编排提示词交给会话执行；动态工作流（kind: dynamic + workflow.ts 脚本）" +
 			"由引擎编排子代理进程后台运行（/sop run|runs|stop）。市场目录与安装走 RPC（GUI 配置页）。",
 		factory: createSopMarketExtension,
+	},
+	{
+		id: SKINS_EXTENSION_ID,
+		name: "skins",
+		description:
+			"换肤插件：内置色板皮肤与自定义图片皮肤，图片落盘 <agentDir>/skins/。" +
+			"GUI 设置页皮肤库 / /skins 命令 / skin agent 工具共用一份数据，" +
+			"支持调节背景遮罩浓度与模糊度（skin_state|apply|add|remove|image|rename RPC）。",
+		factory: createSkinsExtension,
+	},
+	{
+		id: PETS_EXTENSION_ID,
+		name: "pets",
+		description:
+			"宠物插件：通过盲盒抽奖生成宠物（N/R/SR/SSR 四档稀有度 + 闪光变体，加权抽取）。" +
+			"宠物档案持久化到 <agentDir>/pets/，支持喂食、玩耍、改名与放生。" +
+			"GUI 浮动宠物挂件 / /pets 命令 / pet agent 工具共用一份数据（pet_* RPC）。",
+		factory: createPetsExtension,
 	},
 ];
 
