@@ -236,3 +236,47 @@
 .prose-persona ul { margin: 0.3em 0; padding-left: 1.1em; list-style: disc; }
 .prose-persona li { margin: 0.1em 0; }
 .prose-persona strong { color: var(--fg); }
+
+/* Pet widget (pets built-in extension) — floating idle bob, blind-box shake,
+   reveal pop and the shiny-variant golden glow. */
+@keyframes pet-float {
+	0%, 100% { transform: translateY(0); }
+	50% { transform: translateY(-5px); }
+}
+.pet-float {
+	animation: pet-float 2.4s ease-in-out infinite;
+}
+
+@keyframes blindbox-shake {
+	0%, 100% { transform: rotate(0deg) scale(1); }
+	15% { transform: rotate(-9deg) scale(1.04); }
+	30% { transform: rotate(9deg) scale(1.04); }
+	45% { transform: rotate(-7deg) scale(1.06); }
+	60% { transform: rotate(7deg) scale(1.06); }
+	80% { transform: rotate(-3deg) scale(1.08); }
+}
+.blindbox-shake {
+	animation: blindbox-shake 0.7s ease-in-out infinite;
+	transform-origin: 50% 90%;
+}
+
+@keyframes pet-pop {
+	0% { transform: scale(0.4); opacity: 0; }
+	60% { transform: scale(1.12); opacity: 1; }
+	100% { transform: scale(1); opacity: 1; }
+}
+.pet-pop {
+	animation: pet-pop 0.45s cubic-bezier(0.22, 1.4, 0.4, 1) both;
+}
+
+@keyframes pet-shiny {
+	0%, 100% {
+		box-shadow: 0 0 8px 2px rgba(232, 160, 19, 0.45);
+	}
+	50% {
+		box-shadow: 0 0 18px 6px rgba(232, 160, 19, 0.75);
+	}
+}
+.pet-shiny-glow {
+	animation: pet-shiny 1.8s ease-in-out infinite;
+}

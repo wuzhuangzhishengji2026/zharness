@@ -709,6 +709,20 @@
       "bannerTitle": "An API key is required to use ZHarness",
       "bannerBody": "Pick a provider below and enter your API key to start chatting. No providers are configured yet, so the chat feature is currently unavailable.",
       "restarting": "Restarting the sidecar to pick up the new key..."
+    },
+    "skin": {
+      "title": "Skins",
+      "description": "App appearance: builtin palettes follow light/dark mode; upload a custom image as backdrop (stored locally only).",
+      "upload": "Upload image skin",
+      "uploadHint": "PNG/JPG/WebP/GIF, up to 8MB",
+      "tooLarge": "Image exceeds 8MB — compress it and retry.",
+      "readFailed": "Failed to read image.",
+      "active": "Active",
+      "confirmRemove": "Remove skin \"{name}\"?",
+      "adjustTitle": "Tune \"{name}\"",
+      "dim": "Dim",
+      "blur": "Blur",
+      "adjustHint": "Release to apply; higher dim improves text readability."
     }
   },
   "language": {
@@ -879,5 +893,26 @@
     "extensionNotLoaded": "The proactive-assistant extension is not loaded: enable it in Config → Extensions and restart the session.",
     "sessionTurns": "{{turns}} turns in this session",
     "unmute": "Unmute"
+  },
+  "pets": {
+    "title": "Pets",
+    "totalHatched": "{count} boxes opened",
+    "hatching": "Shaking the box…",
+    "newPet": "Congrats! A new companion",
+    "overflow": "Collection full (max 30) — not registered",
+    "shiny": "Shiny",
+    "hatch": "Open Blind Box",
+    "feed": "Feed",
+    "play": "Play",
+    "carry": "Carry",
+    "carrying": "Carried",
+    "mood": "Mood",
+    "energy": "Energy",
+    "collection": "Collection ({count})",
+    "empty": "No pets yet — open a blind box for luck",
+    "doneToday": "Already interacted today — come back tomorrow (daily bonus once per action)",
+    "release": "Release",
+    "releaseTitle": "Release \"{name}\"?",
+    "releaseHint": "Releasing removes it from your collection. Farewell, friend."
   }
 }

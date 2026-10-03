@@ -4,6 +4,17 @@ import { useNavigate, useLocation, useOutletContext } from "react-router-dom";
 import { PageHeader, Card, Badge, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { PixelSelect, PixelCombobox } from "@pxlkit/ui-kit";
+import { Image as ImageIcon, Pencil } from "lucide-react";
+import {
+	fetchSkinState,
+	applySkinRpc,
+	addSkinRpc,
+	removeSkinRpc,
+	fetchSkinImage,
+	renameSkinRpc,
+	subscribeSkinChanges,
+} from "@/lib/skins";
+import type { RpcSkinState, RpcSkin } from "@/lib/types";
 import {
 	listProviders,
 	setProviderApiKey,
@@ -139,7 +150,284 @@ function GeneralTab({ state }: { state: RpcSessionState | null }) {
 					</div>
 				</Row>
 			</Card>
+
+			<SkinCard />
 		</div>
+	);
+}
+
+/**
+ * 皮肤管理卡片（换肤插件 skins 内置扩展的 GUI 面）：
+ * 皮肤库网格（内置色板 + 自定义图片）、上传自定义图片、
+ * 调节图片皮肤的遮罩浓度/模糊度、重命名与删除。
+ * 应用动作走 lib/skins.ts（RPC + CSS 注入），卡片只做目录编排。
+ */
+function SkinCard() {
+	const { t } = useTranslation();
+	const [state, setState] = useState<RpcSkinState | null>(null);
+	/** 自定义图片皮肤的缩略图缓存（skinId → dataURL）。 */
+	const [thumbs, setThumbs] = useState<Record<string, string>>({});
+	const [uploading, setUploading] = useState(false);
+	const [error, setError] = useState("");
+	/** 重命名中的皮肤 id 与草稿。 */
+	const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
+	const [pendingImageSkin, setPendingImageSkin] = useState<string | null>(null);
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	const refresh = useCallback(async () => {
+		const next = await fetchSkinState();
+		setState(next);
+		// 预取自定义皮肤缩略图（跳过已有缓存）。
+		const missing = next.skins.filter((s) => s.image && !(s.id in thumbs));
+		if (missing.length > 0) {
+			const entries = await Promise.all(
+				missing.map(async (s) => [s.id, await fetchSkinImage(s.id)] as const),
+			);
+			setThumbs((prev) => {
+				const merged = { ...prev };
+				for (const [id, dataUrl] of entries) {
+					if (dataUrl) merged[id] = dataUrl;
+				}
+				return merged;
+			});
+		}
+	}, [thumbs]);
+
+	useEffect(() => {
+		void refresh();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	useEffect(() => subscribeSkinChanges(() => void refresh()), [refresh]);
+
+	const handleApply = useCallback(async (skinId: string) => {
+		setError("");
+		try {
+			await applySkinRpc(skinId);
+			await refresh();
+		} catch (e) {
+			setError(e instanceof Error ? e.message : String(e));
+		}
+	}, [refresh]);
+
+	const handleUpload = useCallback(async (file: File) => {
+		setUploading(true);
+		setError("");
+		try {
+			if (file.size > 8 * 1024 * 1024) {
+				throw new Error(t("settings.skin.tooLarge"));
+			}
+			const dataUrl = await new Promise<string>((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onload = () => resolve(String(reader.result));
+				reader.onerror = () => reject(new Error(t("settings.skin.readFailed")));
+				reader.readAsDataURL(file);
+			});
+			await addSkinRpc(file.name.replace(/\.[^.]+$/, ""), dataUrl);
+			await refresh();
+		} catch (e) {
+			setError(e instanceof Error ? e.message : String(e));
+		} finally {
+			setUploading(false);
+		}
+	}, [refresh, t]);
+
+	const handleAdjust = useCallback(
+		async (skin: RpcSkin, dim?: number, blur?: number) => {
+			try {
+				await applySkinRpc(skin.id, { dim, blur });
+				await refresh();
+			} catch (e) {
+				setError(e instanceof Error ? e.message : String(e));
+			}
+		},
+		[refresh],
+	);
+
+	const handleRemove = useCallback(async (skin: RpcSkin) => {
+		if (!confirm(t("settings.skin.confirmRemove", { name: skin.name }))) return;
+		setError("");
+		try {
+			await removeSkinRpc(skin.id);
+			await refresh();
+		} catch (e) {
+			setError(e instanceof Error ? e.message : String(e));
+		}
+	}, [refresh, t]);
+
+	const handleRename = useCallback(async () => {
+		if (!renaming?.name.trim()) {
+			setRenaming(null);
+			return;
+		}
+		try {
+			await renameSkinRpc(renaming.id, renaming.name.trim());
+			await refresh();
+		} catch (e) {
+			setError(e instanceof Error ? e.message : String(e));
+		} finally {
+			setRenaming(null);
+		}
+	}, [renaming, refresh]);
+
+	const activeSkin = state?.skins.find((s) => s.id === state.activeSkinId) ?? null;
+
+	return (
+		<Card>
+			<div className="mb-2 flex items-center justify-between">
+				<div className="text-sm font-medium text-fg">{t("settings.skin.title")}</div>
+				<Button
+					size="sm"
+					tone="accent"
+					variant="soft"
+					loading={uploading}
+					disabled={uploading}
+					onClick={() => fileInputRef.current?.click()}
+					title={t("settings.skin.uploadHint")}
+				>
+					{t("settings.skin.upload")}
+				</Button>
+				<input
+					ref={fileInputRef}
+					type="file"
+					accept="image/png,image/jpeg,image/webp,image/gif"
+					className="hidden"
+					onChange={(e) => {
+						const file = e.target.files?.[0];
+						e.target.value = "";
+						if (file) void handleUpload(file);
+					}}
+				/>
+			</div>
+			<p className="mb-3 text-xs text-muted">{t("settings.skin.description")}</p>
+			{error && (
+				<p className="mb-3 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">{error}</p>
+			)}
+			{!state ? (
+				<p className="py-4 text-center text-xs text-muted">{t("plugins.loading")}</p>
+			) : (
+				<>
+					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+						{state.skins.map((skin) => {
+							const active = skin.id === state.activeSkinId;
+							const thumb = skin.image ? thumbs[skin.id] : undefined;
+							return (
+								<button
+									key={skin.id}
+									type="button"
+									onClick={() => void handleApply(skin.id)}
+									title={skin.description}
+									className={cn(
+										"group relative overflow-hidden rounded-lg border text-left transition-all",
+										active ? "border-accent ring-1 ring-accent/40" : "border-border hover:border-muted/50",
+									)}
+								>
+									<div
+										className="flex h-16 items-center justify-center"
+										style={
+											skin.image
+												? thumb
+													? { backgroundImage: `url(${thumb})`, backgroundSize: "cover", backgroundPosition: "center" }
+													: { background: "linear-gradient(135deg, rgba(148,163,184,0.25), rgba(148,163,184,0.1))" }
+												: {
+														background: skin.colors
+															? `linear-gradient(135deg, ${skin.colors.light["--bg"] ?? "#fff"} 0%, ${skin.colors.light["--surface-2"] ?? "#eee"} 55%, ${skin.colors.light["--accent"] ?? "#08f"} 100%)`
+															: undefined,
+														backgroundColor: skin.colors ? undefined : "var(--surface-2)",
+													}
+										}
+									>
+										{skin.image && !thumb && <ImageIcon className="h-5 w-5 text-muted" />}
+									</div>
+									{renaming?.id === skin.id ? (
+										<div className="flex items-center gap-1 px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
+											<input
+												autoFocus
+												value={renaming.name}
+												onChange={(e) => setRenaming({ id: skin.id, name: e.target.value })}
+												onKeyDown={(e) => {
+													if (e.key === "Enter") void handleRename();
+													if (e.key === "Escape") setRenaming(null);
+												}}
+												className="h-6 w-full min-w-0 rounded border border-border bg-surface-2 px-1.5 text-xs text-fg focus:outline-none"
+											/>
+										</div>
+									) : (
+										<div className="flex items-center gap-1 px-2 py-1.5">
+											<span className="min-w-0 flex-1 truncate text-xs font-medium text-fg">{skin.name}</span>
+											{skin.kind === "custom" && (
+												<span className="hidden shrink-0 items-center gap-0.5 group-hover:flex">
+													<Pencil
+														className="h-3 w-3 cursor-pointer text-muted hover:text-accent"
+														onClick={(e) => {
+															e.stopPropagation();
+															setRenaming({ id: skin.id, name: skin.name });
+														}}
+													/>
+													<Trash2
+														className="h-3 w-3 cursor-pointer text-muted hover:text-danger"
+														onClick={(e) => {
+															e.stopPropagation();
+															void handleRemove(skin);
+														}}
+													/>
+												</span>
+											)}
+											{active && <Badge tone="success">{t("settings.skin.active")}</Badge>}
+										</div>
+									)}
+								</button>
+							);
+						})}
+					</div>
+					{activeSkin?.image && (
+						<div
+							key={`${activeSkin.id}:${activeSkin.image.dim}:${activeSkin.image.blur}`}
+							className="mt-4 space-y-2 rounded-lg border border-border bg-surface-2/50 px-3 py-3"
+						>
+							<div className="text-xs font-medium text-fg">{t("settings.skin.adjustTitle", { name: activeSkin.name })}</div>
+							<label className="flex items-center gap-3 text-xs text-muted">
+								<span className="w-16 shrink-0">{t("settings.skin.dim")}</span>
+								<input
+									type="range"
+									min={0}
+									max={90}
+									step={5}
+									defaultValue={Math.round((activeSkin.image.dim ?? 0.45) * 100)}
+									onChange={() => setPendingImageSkin(activeSkin.id)}
+								onPointerUp={(e) => {
+									if (pendingImageSkin === activeSkin.id) {
+										void handleAdjust(activeSkin, Number((e.target as HTMLInputElement).value) / 100);
+										setPendingImageSkin(null);
+									}
+								}}
+									className="h-1 flex-1 accent-[var(--accent)]"
+								/>
+							</label>
+							<label className="flex items-center gap-3 text-xs text-muted">
+								<span className="w-16 shrink-0">{t("settings.skin.blur")}</span>
+								<input
+									type="range"
+									min={0}
+									max={12}
+									step={1}
+									defaultValue={activeSkin.image.blur ?? 0}
+									onChange={() => setPendingImageSkin(activeSkin.id)}
+								onPointerUp={(e) => {
+									if (pendingImageSkin === activeSkin.id) {
+										void handleAdjust(activeSkin, undefined, Number((e.target as HTMLInputElement).value));
+										setPendingImageSkin(null);
+									}
+								}}
+									className="h-1 flex-1 accent-[var(--accent)]"
+								/>
+							</label>
+							<p className="text-[10px] text-muted/70">{t("settings.skin.adjustHint")}</p>
+						</div>
+					)}
+				</>
+			)}
+		</Card>
 	);
 }
 

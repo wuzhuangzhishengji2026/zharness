@@ -25,6 +25,26 @@
 						document.documentElement.style.fontSize = px + "px";
 					}
 				} catch (e) {}
+
+				// 换肤插件开机防闪：回放上次应用的皮肤（色板 CSS / 图片图层），
+				// 先于 React 挂载上妆，避免先白一帧再换肤。正常路径由 lib/skins.ts
+				// 维护缓存；这里只读不写，失败静默走默认皮肤。
+				try {
+					var skinId = localStorage.getItem('zharness-skin-id');
+					var skinCss = localStorage.getItem('zharness-skin-css');
+					var skinImage = localStorage.getItem('zharness-skin-image');
+					if (skinCss) {
+						var st = document.createElement('style');
+						st.id = 'zharness-skin-vars';
+						st.textContent = skinCss;
+						document.head.appendChild(st);
+					} else if (skinImage && skinId) {
+						var st2 = document.createElement('style');
+						st2.id = 'zharness-skin-vars';
+						st2.textContent = 'body::before { content: ""; position: fixed; inset: 0; z-index: -2; background-image: url(' + skinImage + '); background-size: cover; background-position: center; }';
+						document.head.appendChild(st2);
+					}
+				} catch (e) {}
 			})();
 		</script>
 	</head>

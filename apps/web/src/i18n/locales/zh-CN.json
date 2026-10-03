@@ -709,6 +709,20 @@
       "bannerTitle": "需要配置 API key 才能使用 ZHarness",
       "bannerBody": "在下方选择一个服务商并填入 API key,即可开始聊天。当前没有配置任何服务商,所以聊天功能暂时不可用。",
       "restarting": "正在重启 sidecar 以应用新 key..."
+    },
+    "skin": {
+      "title": "皮肤",
+      "description": "应用外观：内置色板皮肤随明暗模式自动切换，也可上传自定义图片作为背景（图片仅保存在本机）。",
+      "upload": "上传图片皮肤",
+      "uploadHint": "支持 PNG/JPG/WebP/GIF，不超过 8MB",
+      "tooLarge": "图片超过 8MB，请压缩后再试。",
+      "readFailed": "图片读取失败。",
+      "active": "使用中",
+      "confirmRemove": "确定删除皮肤「{name}」吗？",
+      "adjustTitle": "「{name}」显示调节",
+      "dim": "遮罩浓度",
+      "blur": "背景模糊",
+      "adjustHint": "拖动后松开即生效；遮罩越浓文字越清晰。"
     }
   },
   "language": {
@@ -879,5 +893,26 @@
     "extensionNotLoaded": "proactive-assistant 扩展未加载：请在「配置管理 → 扩展」启用并重启会话。",
     "sessionTurns": "本会话已进行 {{turns}} 轮对话",
     "unmute": "解除免打扰"
+  },
+  "pets": {
+    "title": "宠物",
+    "totalHatched": "累计开盒 {count} 次",
+    "hatching": "摇晃盲盒中……",
+    "newPet": "恭喜！抽到了新伙伴",
+    "overflow": "档案已满（上限 30 只），本次未入册",
+    "shiny": "闪光",
+    "hatch": "开盲盒",
+    "feed": "喂食",
+    "play": "玩耍",
+    "carry": "设为携带",
+    "carrying": "携带中",
+    "mood": "心情",
+    "energy": "精力",
+    "collection": "宠物档案（{count}）",
+    "empty": "还没有宠物，开一盒盲盒碰碰运气吧",
+    "doneToday": "今天已经互动过啦，明天再来（每日各一次加成）",
+    "release": "放生",
+    "releaseTitle": "放生「{name}」？",
+    "releaseHint": "放生后档案移除，念在缘分江湖再见。"
   }
 }

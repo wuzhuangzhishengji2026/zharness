@@ -11,6 +11,8 @@ import AutomationView from "@/views/AutomationView";
 import ReplayPage from "@/views/ReplayPage";
 import { ExtensionUIDialog } from "@/components/ExtensionUIDialog";
 import { ProactiveAssistantWidget } from "@/components/ProactiveAssistantWidget";
+import { PetWidget } from "@/components/PetWidget";
+import { refreshSkinFromAgent, subscribeSkinChanges } from "@/lib/skins";
 import { subscribeSidecarExit, subscribeEvents, initSidecar, sendCommandAwait, listWorkspaces, restartSidecar, newSession, listAllSessions, type SidebarSessionInfo } from "@/lib/transport";
 import { BrandIcon } from "@/components/BrandIcon";
 import type { RpcSessionState, WorkspaceMeta } from "@/lib/types";
@@ -426,6 +428,16 @@ function AppInner() {
 		}
 	}, [sidecarReady]);
 
+	// 换肤插件：sidecar 就绪后与扩展对账上妆（开机时 index.html 内联脚本已用
+	// localStorage 缓存先行上妆，这里修正遮罩/模糊等参数），并订阅皮肤变更。
+	useEffect(() => {
+		if (!sidecarReady) return;
+		void refreshSkinFromAgent().catch(() => {});
+		return subscribeSkinChanges(() => {
+			void refreshSkinFromAgent().catch(() => {});
+		});
+	}, [sidecarReady, workspace]);
+
 	useEffect(() => {
 		return () => {
 			if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
@@ -575,6 +587,7 @@ function AppInner() {
 		<PxlKitSurfaceProvider surface="pixel">
 			<ExtensionUIDialog workspace={workspace} />
 			<ProactiveAssistantWidget workspace={workspace} sidecarReady={sidecarReady} />
+			<PetWidget workspace={workspace} sidecarReady={sidecarReady} />
 			<Routes>
 					<Route
 						element={
