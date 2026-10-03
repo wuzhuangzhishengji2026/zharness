@@ -110,6 +110,7 @@ npm test            # 离线测试
 - SOP 市场与动态工作流引擎（builtin-sops：code-review、deep-research、dynamic-task、weekly-report）
 - 内置技能（builtin-skills：api-map、自优化）与内置扩展（codegen 流水线、主动助手、持久化主 Agent）
 - RPC 集成面（`--mode rpc`，stdin/stdout JSONL），供第三方嵌入
+- 移动桥接（`zharness serve`）：WebSocket + 扫码配对 + 事件增量同步，配套安卓客户端（[apps/android](apps/android/README.md)）
 - 计划任务（调度器）与跨工作区会话派发
 
 ## 06 · 文档地图
@@ -121,6 +122,7 @@ npm test            # 离线测试
 | [架构 Wiki](wiki/) | 架构总览、Reactor 循环、会话树与时间线、RPC 与桌面端、SOP 市场、知识库规范 |
 | [设计理念随笔](docs/DESIGN-RATIONALE.zh-CN.md) | 为什么做事件驱动 Harness：与 Pi / DSH 的对比与取舍 |
 | [持久化 Agent 设计](docs/PERSISTENT-AGENT.zh-CN.md) | `~/.zharness/main` 常驻人格 Agent 的设计文档 |
+| [安卓版设计与实现](docs/ANDROID-DESIGN.zh-CN.md) | 移动端投影：`zharness serve` 桥接 + 安卓客户端（[apps/android](apps/android/README.md)） |
 
 ## 07 · 参与
 
