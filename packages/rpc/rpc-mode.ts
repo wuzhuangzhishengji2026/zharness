@@ -115,6 +115,28 @@ import {
 	mute,
 } from "../../src/builtin-extensions/proactive-assistant/store.js";
 import { deriveWorkspaceId } from "../../src/core/event-store/workspace.js";
+import {
+	addCustomSkin,
+	applySkin,
+	findSkin,
+	getSkinState,
+	readSkinImage,
+	removeCustomSkin,
+	renameCustomSkin,
+	toRpcSkin,
+} from "../../src/builtin-extensions/skins/store.js";
+import { emitSkinChanged } from "../../src/builtin-extensions/skins/index.js";
+import {
+	emitPetsChanged,
+	hatchPet,
+	getActivePetView,
+	getPetsState,
+	interactPet,
+	releasePet,
+	renamePet,
+	setActivePet,
+	toPetView,
+} from "../../src/builtin-extensions/pets/store.js";
 import { listAllSessionsLight } from "../../src/core/session-listing.js";
 import { installSkillFromDirectory } from "../../src/core/skill-install.js";
 import {
@@ -2260,6 +2282,124 @@ export async function runRpcModeWithFacade(facade: SessionFacade): Promise<never
 					return success(id, "task_board", { action: "delete", deleted });
 				}
 			}
+		}
+
+		case "skin_state": {
+			// 换肤插件（skins 内置扩展的数据面）：GUI 设置页皮肤库经此读取
+			// 与 `skin` agent 工具 / `/skins` 命令同一份 skins.json。
+			const state = getSkinState();
+			return success(id, "skin_state", {
+				skins: state.skins.map(toRpcSkin),
+				activeSkinId: state.activeSkinId,
+			});
+		}
+
+		case "skin_apply": {
+			const skinId = typeof command.skinId === "string" ? command.skinId.trim() : "";
+			if (!skinId) return error(id, "skin_apply", "skinId is required");
+			const skin = applySkin(skinId, { dim: command.dim, blur: command.blur });
+			if (skin) {
+				emitSkinChanged(facade.runtime.store, `启用皮肤：${skin.name}`);
+			}
+			return success(id, "skin_apply", { skin: skin ? toRpcSkin(skin) : null });
+		}
+
+		case "skin_add": {
+			const name = typeof command.name === "string" ? command.name : "";
+			const dataUrl = typeof command.dataUrl === "string" ? command.dataUrl : "";
+			try {
+				const skin = addCustomSkin({ name, dataUrl, dim: command.dim, blur: command.blur });
+				emitSkinChanged(facade.runtime.store, `新增自定义皮肤：${skin.name}`);
+				return success(id, "skin_add", { skin: toRpcSkin(skin) });
+			} catch (e) {
+				return error(id, "skin_add", e instanceof Error ? e.message : String(e));
+			}
+		}
+
+		case "skin_remove": {
+			const skinId = typeof command.skinId === "string" ? command.skinId : "";
+			const removed = removeCustomSkin(skinId);
+			if (removed) {
+				emitSkinChanged(facade.runtime.store, `删除自定义皮肤：${skinId}`);
+			}
+			return success(id, "skin_remove", { removed });
+		}
+
+		case "skin_image": {
+			const skinId = typeof command.skinId === "string" ? command.skinId : "";
+			return success(id, "skin_image", { dataUrl: readSkinImage(skinId) });
+		}
+
+		case "skin_rename": {
+			const skinId = typeof command.skinId === "string" ? command.skinId : "";
+			const name = typeof command.name === "string" ? command.name : "";
+			const skin = renameCustomSkin(skinId, name);
+			const known = skin ?? findSkin(skinId);
+			if (skin) {
+				emitSkinChanged(facade.runtime.store, `皮肤改名：${skin.name}`);
+			}
+			return success(id, "skin_rename", { skin: known ? toRpcSkin(known) : null });
+		}
+
+		case "pet_state": {
+			// 宠物插件（pets 内置扩展的数据面）：GUI 浮动挂件经此读写
+			// 与 `pet` agent 工具 / `/pets` 命令同一份 pets.json。
+			const state = getPetsState();
+			return success(id, "pet_state", {
+				pets: state.pets,
+				activePetId: state.activePetId,
+				activePetView: getActivePetView(),
+				totalHatched: state.totalHatched,
+			});
+		}
+
+		case "pet_hatch": {
+			const { pet, draw, overflow } = hatchPet();
+			if (!overflow) {
+				emitPetsChanged(facade.runtime.store, `开盲盒抽到 ${pet.name}（${pet.rarity}${pet.shiny ? " · 闪光" : ""}）`);
+			}
+			return success(id, "pet_hatch", {
+				pet: overflow ? null : pet,
+				draw: {
+					speciesId: draw.species.id,
+					speciesName: draw.species.name,
+					rarity: draw.species.rarity,
+					shiny: draw.shiny,
+				},
+				overflow,
+			});
+		}
+
+		case "pet_interact": {
+			const result = interactPet(command.petId, command.action);
+			if (result.effected && result.pet) {
+				emitPetsChanged(facade.runtime.store, `${command.action === "feed" ? "喂食" : "陪玩"}：${result.pet.name}`);
+			}
+			return success(id, "pet_interact", { kind: command.action, ...result });
+		}
+
+		case "pet_rename": {
+			const pet = renamePet(command.petId, command.name);
+			if (pet) {
+				emitPetsChanged(facade.runtime.store, `宠物改名：${pet.name}`);
+			}
+			return success(id, "pet_rename", { pet });
+		}
+
+		case "pet_carry": {
+			const pet = setActivePet(command.petId);
+			if (pet) {
+				emitPetsChanged(facade.runtime.store, `携带宠物切换为 ${pet.name}`);
+			}
+			return success(id, "pet_carry", { pet });
+		}
+
+		case "pet_release": {
+			const released = releasePet(command.petId);
+			if (released) {
+				emitPetsChanged(facade.runtime.store, "放生了一只宠物");
+			}
+			return success(id, "pet_release", { released });
 		}
 
 			default: {

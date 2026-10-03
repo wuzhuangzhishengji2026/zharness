@@ -661,7 +661,30 @@ export type RpcCommand =
 	| { id?: string; type: "proactive_assistant"; action: "knowledge_draft"; suggestionId: string }
 	| { id?: string; type: "proactive_assistant"; action: "knowledge_save"; title: string; content: string; tags?: string[] }
 	| { id?: string; type: "proactive_assistant"; action: "clear" }
-	| { id?: string; type: "proactive_assistant"; action: "mute"; minutes: number };
+	| { id?: string; type: "proactive_assistant"; action: "mute"; minutes: number }
+
+	// Skins (skins built-in extension; SettingsView skin library)
+	| { id?: string; type: "skin_state" }
+	| {
+			id?: string;
+			type: "skin_apply";
+			skinId: string;
+			/** 自定义图片皮肤可顺带调节遮罩/模糊。 */
+			dim?: number;
+			blur?: number;
+	  }
+	| { id?: string; type: "skin_add"; name: string; dataUrl: string; dim?: number; blur?: number }
+	| { id?: string; type: "skin_remove"; skinId: string }
+	| { id?: string; type: "skin_image"; skinId: string }
+	| { id?: string; type: "skin_rename"; skinId: string; name: string }
+
+	// Pets (pets built-in extension; floating pet widget)
+	| { id?: string; type: "pet_state" }
+	| { id?: string; type: "pet_hatch" }
+	| { id?: string; type: "pet_interact"; action: "feed" | "play"; petId: string }
+	| { id?: string; type: "pet_rename"; petId: string; name: string }
+	| { id?: string; type: "pet_carry"; petId: string }
+	| { id?: string; type: "pet_release"; petId: string };
 
 // ============================================================================
 // RPC Slash Command (for get_commands response)
@@ -707,6 +730,109 @@ export type RpcTaskBoardResult =
 	| { action: "create"; task: RpcTaskItem }
 	| { action: "update"; task: RpcTaskItem | null }
 	| { action: "delete"; deleted: boolean };
+
+// ============================================================================
+// Skins payloads (skins built-in extension)
+// ============================================================================
+
+/** One skin, builtin palette or custom image. */
+export interface RpcSkin {
+	id: string;
+	name: string;
+	kind: "builtin" | "custom";
+	description?: string;
+	/** 色板覆盖（内置色板皮肤）：CSS 变量名 → 值，按 light/dark 分套。 */
+	colors?: {
+		light: Record<string, string>;
+		dark: Record<string, string>;
+	};
+	/** 自定义图片皮肤元数据（图片本体经 skin_image 拉 data URL）。 */
+	image?: {
+		mime: string;
+		dim: number;
+		blur: number;
+	};
+}
+
+/** Result of `skin_state`. */
+export interface RpcSkinState {
+	skins: RpcSkin[];
+	activeSkinId: string;
+}
+
+/** Result of `skin_image`: the image as a data URL, or null when the skin has none. */
+export type RpcSkinImage = { dataUrl: string | null };
+
+// ============================================================================
+// Pets payloads (pets built-in extension)
+// ============================================================================
+
+export type RpcPetRarity = "N" | "R" | "SR" | "SSR";
+
+/** One pet record. */
+export interface RpcPet {
+	id: string;
+	name: string;
+	/** 种族 id（图鉴）。 */
+	speciesId: string;
+	/** 个性 id。 */
+	personalityId: string;
+	rarity: RpcPetRarity;
+	shiny: boolean;
+	mood: number;
+	energy: number;
+	bond: number;
+	/** ISO 时间。 */
+	hatchedAt: string;
+	lastFedAt?: string;
+	lastPlayedAt?: string;
+}
+
+/** 宠物 + 图鉴合成视图（GUI 直接渲染用）。 */
+export interface RpcPetView {
+	pet: RpcPet;
+	speciesName: string;
+	speciesEmoji: string;
+	speciesColor: string;
+	blurb: string;
+	personalityName: string;
+	catchphrase: string;
+}
+
+/** 盲盒抽取原始结果（开箱动画展示）。 */
+export interface RpcBlindBoxDraw {
+	speciesId: string;
+	speciesName: string;
+	rarity: RpcPetRarity;
+	shiny: boolean;
+}
+
+/** Result of `pet_hatch`. */
+export interface RpcHatchResult {
+	pet: RpcPet | null;
+	draw: RpcBlindBoxDraw;
+	/** 档案已满（上限 30 只），本次未入册。 */
+	overflow: boolean;
+}
+
+/** Result of `pet_interact`. */
+export interface RpcPetInteractResult {
+	kind: "feed" | "play";
+	pet: RpcPet | null;
+	moodDelta: number;
+	energyDelta: number;
+	/** false = 今日已互动过或宠物不存在。 */
+	effected: boolean;
+}
+
+/** Result of `pet_state`. */
+export interface RpcPetsState {
+	pets: RpcPet[];
+	activePetId?: string;
+	/** 携带中的宠物视图（无档案为 null）。 */
+	activePetView: RpcPetView | null;
+	totalHatched: number;
+}
 
 /** A user-invocable skill (from ~/.zharness skills), as returned by get_skills. */
 export interface RpcSkillInfo {
@@ -891,6 +1017,20 @@ export type RpcResponse =
 	| { id?: string; type: "response"; command: "schedule_history"; success: true; data: { runs: ScheduledTaskRun[] } }
 	// Task board
 	| { id?: string; type: "response"; command: "task_board"; success: true; data: RpcTaskBoardResult }
+	// Skins
+	| { id?: string; type: "response"; command: "skin_state"; success: true; data: RpcSkinState }
+	| { id?: string; type: "response"; command: "skin_apply"; success: true; data: { skin: RpcSkin | null } }
+	| { id?: string; type: "response"; command: "skin_add"; success: true; data: { skin: RpcSkin } }
+	| { id?: string; type: "response"; command: "skin_remove"; success: true; data: { removed: boolean } }
+	| { id?: string; type: "response"; command: "skin_image"; success: true; data: RpcSkinImage }
+	| { id?: string; type: "response"; command: "skin_rename"; success: true; data: { skin: RpcSkin | null } }
+	// Pets
+	| { id?: string; type: "response"; command: "pet_state"; success: true; data: RpcPetsState }
+	| { id?: string; type: "response"; command: "pet_hatch"; success: true; data: RpcHatchResult }
+	| { id?: string; type: "response"; command: "pet_interact"; success: true; data: RpcPetInteractResult }
+	| { id?: string; type: "response"; command: "pet_rename"; success: true; data: { pet: RpcPet | null } }
+	| { id?: string; type: "response"; command: "pet_carry"; success: true; data: { pet: RpcPet | null } }
+	| { id?: string; type: "response"; command: "pet_release"; success: true; data: { released: boolean } }
 	// Approval (safe mode)
 	| { id?: string; type: "response"; command: "approve"; success: true }
 	| { id?: string; type: "response"; command: "reject"; success: true }
