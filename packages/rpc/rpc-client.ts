@@ -495,7 +495,13 @@ export class RpcClient {
 		}
 	}
 
-	private async send(command: RpcCommandBody): Promise<RpcResponse> {
+	/**
+	 * Send an arbitrary command frame and await its response.
+	 *
+	 * Public so bridge layers (e.g. serve mode) can relay client commands
+	 * verbatim without enumerating the typed helpers.
+	 */
+	async send(command: RpcCommandBody): Promise<RpcResponse> {
 		if (!this.process?.stdin) {
 			throw new Error("Client not started");
 		}

@@ -534,7 +534,7 @@ export type RpcCommand =
 	| { id?: string; type: "history_tree"; action: "jump"; sessionId: string; reason?: string }
 	| { id?: string; type: "history_tree"; action: "fork"; sessionId: string }
 	| { id?: string; type: "history_tree"; action: "rename"; sessionId: string; name: string }
-	| { id?: string; type: "get_events"; eventTypes?: string[]; limit?: number; sessionScoped?: boolean; sessionId?: string }
+	| { id?: string; type: "get_events"; eventTypes?: string[]; limit?: number; sessionScoped?: boolean; sessionId?: string; sinceSequence?: number }
 
 	// Sessions of every workspace (sidebar mapping; index-only lightweight scan)
 	| { id?: string; type: "list_sessions" }

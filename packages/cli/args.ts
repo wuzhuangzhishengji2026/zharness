@@ -7,7 +7,7 @@ import chalk from "chalk";
 import { APP_NAME, CONFIG_DIR_NAME, ENV_AGENT_DIR } from "../../src/config.js";
 import type { ExtensionFlag } from "../../src/core/extensions/types.js";
 
-export type Mode = "text" | "json" | "rpc" | "gui";
+export type Mode = "text" | "json" | "rpc" | "gui" | "serve";
 
 export interface Args {
 	provider?: string;
@@ -48,6 +48,10 @@ export interface Args {
 	mainDir?: string;
 	/** Override the main agent memory directory. */
 	memoryDir?: string;
+	/** serve mode: TCP port for the mobile bridge (default: ephemeral). */
+	port?: string;
+	/** serve mode: bind address (default 0.0.0.0). */
+	host?: string;
 	messages: string[];
 	fileArgs: string[];
 	/** Unknown flags (potentially extension flags) - map of flag name to value */
@@ -74,15 +78,21 @@ export function parseArgs(args: string[]): Args {
 
 		if (i === 0 && arg === "gui") {
 			result.mode = "gui";
+		} else if (i === 0 && arg === "serve") {
+			result.mode = "serve";
 		} else if (arg === "--help" || arg === "-h") {
 			result.help = true;
 		} else if (arg === "--version" || arg === "-v") {
 			result.version = true;
 		} else if (arg === "--mode" && i + 1 < args.length) {
 			const mode = args[++i];
-			if (mode === "text" || mode === "json" || mode === "rpc" || mode === "gui") {
+			if (mode === "text" || mode === "json" || mode === "rpc" || mode === "gui" || mode === "serve") {
 				result.mode = mode;
 			}
+		} else if (arg === "--port" && i + 1 < args.length) {
+			result.port = args[++i];
+		} else if (arg === "--host" && i + 1 < args.length) {
+			result.host = args[++i];
 		} else if (arg === "--rewind") {
 			// --rewind [id]: alone = auto-resume latest, with id = jump to branch
 			if (i + 1 < args.length && !args[i + 1].startsWith("-") && !args[i + 1].startsWith("@")) {
@@ -277,6 +287,9 @@ ${chalk.bold("Examples:")}
 
   # Local GUI
   ${APP_NAME} gui
+
+  # Mobile bridge (pair the Android client over LAN)
+  ${APP_NAME} serve --port 8787
 
   # Interactive mode with initial prompt
   ${APP_NAME} "List all .ts files in src/"

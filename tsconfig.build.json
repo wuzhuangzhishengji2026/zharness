@@ -26,10 +26,11 @@
 			"@zharness/protocol": ["./packages/protocol/index.ts"],
 			"@zharness/http-bridge": ["./packages/http-bridge/server.ts"],
 			"@zharness/rpc": ["./packages/rpc/rpc-mode.ts"],
+			"@zharness/serve": ["./packages/serve/server.ts"],
 			"@zharness/tui": ["./packages/tui/interactive-mode.ts"],
 			"@zharness/cli": ["./packages/cli/args.ts"]
 		}
 	},
-	"include": ["src/**/*.ts", "packages/protocol/index.ts", "packages/http-bridge/server.ts", "packages/rpc/*.ts", "packages/tui/**/*.ts", "packages/cli/*.ts"],
+	"include": ["src/**/*.ts", "packages/protocol/index.ts", "packages/http-bridge/server.ts", "packages/rpc/*.ts", "packages/serve/*.ts", "packages/tui/**/*.ts", "packages/cli/*.ts"],
 	"exclude": ["node_modules", "dist", "**/*.d.ts", "src/**/*.d.ts", "src/builtin-sops/**"]
 }

@@ -1328,6 +1328,7 @@ export async function runRpcModeWithFacade(facade: SessionFacade): Promise<never
 			case "get_events": {
 				const store = facade.runtime.store;
 				const eventTypes = command.eventTypes as EventType[] | undefined;
+				const sinceSequence = command.sinceSequence;
 				let events: EventBase[];
 				if (command.sessionId) {
 					// 查看模式:该分支投影(继承段 ∪ 主段)的事件(与 get_messages
@@ -1343,6 +1344,10 @@ export async function runRpcModeWithFacade(facade: SessionFacade): Promise<never
 				} else {
 					events = store.query({ types: eventTypes });
 				}
+				if (typeof sinceSequence === "number") {
+					// Incremental sync cursor for serve-mode mobile clients.
+					events = events.filter((e) => e.sequence > sinceSequence);
+				}
 				const limit = command.limit ?? 1000;
 				const sliced = events.length > limit ? events.slice(-limit) : events;
 				return success(id, "get_events", {
@@ -1350,6 +1355,7 @@ export async function runRpcModeWithFacade(facade: SessionFacade): Promise<never
 						event_id: e.event_id,
 						type: e.type,
 						timestamp: e.timestamp,
+						sequence: e.sequence,
 						actor_id: e.actor_id,
 						caused_by: e.caused_by,
 						thread_id: e.thread_id,

@@ -95,7 +95,7 @@ function isTruthyEnvFlag(value: string | undefined): boolean {
 	return value === "1" || value.toLowerCase() === "true" || value.toLowerCase() === "yes";
 }
 
-type AppMode = "interactive" | "print" | "json" | "rpc" | "gui";
+type AppMode = "interactive" | "print" | "json" | "rpc" | "gui" | "serve";
 
 function resolveAppMode(parsed: Args, stdinIsTTY: boolean): AppMode {
 	if (parsed.mode === "gui") {
@@ -103,6 +103,9 @@ function resolveAppMode(parsed: Args, stdinIsTTY: boolean): AppMode {
 	}
 	if (parsed.mode === "rpc") {
 		return "rpc";
+	}
+	if (parsed.mode === "serve") {
+		return "serve";
 	}
 	if (parsed.mode === "json") {
 		return "json";
@@ -113,7 +116,7 @@ function resolveAppMode(parsed: Args, stdinIsTTY: boolean): AppMode {
 	return "interactive";
 }
 
-function toPrintOutputMode(appMode: AppMode): Exclude<Mode, "rpc" | "gui"> {
+function toPrintOutputMode(appMode: AppMode): Exclude<Mode, "rpc" | "gui" | "serve"> {
 	return appMode === "json" ? "json" : "text";
 }
 
@@ -442,7 +445,7 @@ export async function main(args: string[], options?: MainOptions) {
 	}
 	time("parseArgs");
 	let appMode = resolveAppMode(parsed, process.stdin.isTTY);
-	const shouldTakeOverStdout = appMode !== "interactive" && appMode !== "gui";
+	const shouldTakeOverStdout = appMode !== "interactive" && appMode !== "gui" && appMode !== "serve";
 	if (shouldTakeOverStdout) {
 		takeOverStdout();
 	}
@@ -469,6 +472,29 @@ export async function main(args: string[], options?: MainOptions) {
 	if (parsed.mode === "rpc" && parsed.fileArgs.length > 0) {
 		console.error(chalk.red("Error: @file arguments are not supported in RPC mode"));
 		process.exit(1);
+	}
+
+	// ── serve mode: LAN bridge for mobile clients ──────────────────────────
+	// No facade, no session setup here — the bridge spawns the agent as an
+	// `--mode rpc` sidecar per workspace and relays WebSocket frames to it.
+	if (parsed.mode === "serve") {
+		if (parsed.fileArgs.length > 0) {
+			console.error(chalk.red("Error: @file arguments are not supported in serve mode"));
+			process.exit(1);
+		}
+		const { runServeServer } = await import("../packages/serve/server.js");
+		const handle = await runServeServer({
+			cwd: process.cwd(),
+			host: parsed.host,
+			port: parsed.port,
+		});
+		const gracefulStop = (signal: string) => {
+			console.log(`\n[serve] ${signal} received, shutting down`);
+			void handle.stop().then(() => process.exit(0));
+		};
+		process.on("SIGINT", () => gracefulStop("SIGINT"));
+		process.on("SIGTERM", () => gracefulStop("SIGTERM"));
+		return;
 	}
 
 	// ── Persistent ("main") agent setup ───────────────────────────────────
