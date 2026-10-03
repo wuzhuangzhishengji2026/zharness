@@ -29,8 +29,16 @@ if [ "${1:-}" != "--serve" ]; then
 	# ---- 1. 系统依赖（node-pty 源码编译需要 python/make/clang） --------------
 	say "安装系统依赖（nodejs / git / 编译工具链）..."
 	pkg update -y
+	# 全量升级必须先于 nodejs 安装：部分升级会让新 node 链接到旧 openssl，
+	# 报 "CANNOT LINK EXECUTABLE node: cannot locate symbol OSSL_PROVIDER_..."
+	pkg upgrade -y
 	pkg install -y nodejs git python make clang binutils
 
+	if ! node -v >/dev/null 2>&1; then
+		echo "node 无法启动（多为 openssl 未随 node 一起升级）。"
+		echo "请执行: pkg upgrade -y 然后重新运行本脚本。"
+		exit 1
+	fi
 	NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
 	NODE_MINOR="$(node -p 'process.versions.node.split(".")[1]')"
 	say "Node 版本: $(node -v)"
