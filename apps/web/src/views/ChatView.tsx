@@ -250,13 +250,13 @@ function AgentIdentityCard({
 	return (
 		<div className="flex w-full flex-col items-center gap-5 px-6 pb-2 pt-4 text-center">
 			<img
-				src="/ui/misc/robot-light.png"
+				src="/ui/misc/avatar-light.png"
 				alt=""
 				draggable={false}
 				className="h-[88px] w-auto select-none dark:hidden"
 			/>
 			<img
-				src="/ui/misc/robot-dark.png"
+				src="/ui/misc/avatar-dark.png"
 				alt=""
 				draggable={false}
 				className="hidden h-[88px] w-auto select-none dark:block"

@@ -1,18 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 260 260" fill="none">
-  <!-- 角 -->
-  <rect x="15.5" y="126.5" width="80" height="7" rx="3.5" fill="#d97757" />
-  <!-- 头 -->
-  <rect x="91.5" y="92" width="9" height="76" rx="4.5" fill="#d97757" opacity="0.9" />
-  <!-- 身体 -->
-  <rect x="109.5" y="76" width="9" height="108" rx="4.5" fill="#d97757" />
-  <rect x="127.5" y="64" width="9" height="132" rx="4.5" fill="#d97757" />
-  <rect x="145.5" y="56" width="9" height="148" rx="4.5" fill="#d97757" />
-  <rect x="163.5" y="64" width="9" height="132" rx="4.5" fill="#d97757" />
-  <rect x="181.5" y="76" width="9" height="108" rx="4.5" fill="#d97757" />
-  <!-- 尾 -->
-  <rect x="199.5" y="90" width="9" height="80" rx="4.5" fill="#d97757" opacity="0.8" />
-  <rect x="217.5" y="104" width="9" height="52" rx="4.5" fill="#d97757" opacity="0.6" />
-  <!-- 尾鳍 -->
-  <rect x="235.5" y="90" width="9" height="28" rx="4.5" fill="#d97757" opacity="0.45" />
-  <rect x="235.5" y="142" width="9" height="28" rx="4.5" fill="#d97757" opacity="0.45" />
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+	<defs>
+		<linearGradient id="zh-bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#151f2b"/>
+			<stop offset="1" stop-color="#0a0e14"/>
+		</linearGradient>
+		<linearGradient id="zh-green" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#5BF7AC"/>
+			<stop offset="1" stop-color="#12CE8C"/>
+		</linearGradient>
+		<radialGradient id="zh-glow" cx="0.5" cy="0.44" r="0.62">
+			<stop offset="0" stop-color="#1C4A38" stop-opacity="0.85"/>
+			<stop offset="1" stop-color="#1C4A38" stop-opacity="0"/>
+		</radialGradient>
+		<filter id="zh-blur" x="-80%" y="-80%" width="260%" height="260%">
+			<feGaussianBlur stdDeviation="26"/>
+		</filter>
+	</defs>
+	<rect width="1024" height="1024" rx="232" fill="url(#zh-bg)"/>
+	<rect width="1024" height="1024" rx="232" fill="url(#zh-glow)"/>
+	<path d="M150 330 V150 H330" fill="none" stroke="#27E398" stroke-opacity="0.32" stroke-width="20" stroke-linecap="square"/>
+		<path d="M694 150 H874 V330" fill="none" stroke="#27E398" stroke-opacity="0.32" stroke-width="20" stroke-linecap="square"/>
+		<path d="M874 694 V874 H694" fill="none" stroke="#27E398" stroke-opacity="0.32" stroke-width="20" stroke-linecap="square"/>
+		<path d="M330 874 H150 V694" fill="none" stroke="#27E398" stroke-opacity="0.32" stroke-width="20" stroke-linecap="square"/>
+	<g transform="translate(512 514) scale(1) skewX(-6) translate(-512 -514)">
+		<rect x="800" y="648" width="104" height="116" rx="10" fill="url(#zh-green)" opacity="0.85" filter="url(#zh-blur)"/>
+		<path d="M272 264 H752 V380 L444 648 H752 V764 H272 V648 L580 380 H272 Z" fill="#F5F9FC"/>
+		<rect x="800" y="648" width="104" height="116" rx="10" fill="url(#zh-green)"/>
+	</g>
 </svg>

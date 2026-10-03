@@ -1,3 +1,10 @@
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-lockup-dark.svg">
+    <img src="assets/logo-lockup.svg" alt="ZHarness" width="360">
+  </picture>
+</div>
+
 # ZHarness 用户说明书（干货版）
 
 ZHarness 是事件驱动的编码 Agent。CLI、TUI、桌面 GUI 三种形态共享**同一个运行时与事件流**——形态不同，底层始终是同一个 Agent。下表按"终端级命令 → 会话内斜杠命令 → 桌面端能力 → 模型可用工具"分层罗列，并标注适用场景。
