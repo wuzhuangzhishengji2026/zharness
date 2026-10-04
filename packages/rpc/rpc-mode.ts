@@ -1905,6 +1905,46 @@ export async function runRpcModeWithFacade(facade: SessionFacade): Promise<never
 			});
 		}
 
+		case "auth_set": {
+			// Mobile clients live in a different sandbox than the engine and
+			// cannot edit auth.json out-of-band; they push keys through the
+			// bridge instead. The key is persisted to the engine-side
+			// auth.json only — it never lands on the phone.
+			const registry = facade.modelRegistry;
+			const authStorage = registry?.authStorage;
+			if (!authStorage) {
+				return error(id, "auth_set", "Auth storage is not available");
+			}
+			const provider = typeof command.provider === "string" ? command.provider.trim() : "";
+			const apiKey = typeof command.apiKey === "string" ? command.apiKey.trim() : "";
+			if (!provider || provider.length > 128) {
+				return error(id, "auth_set", "provider is required (max 128 chars)");
+			}
+			if (!apiKey || apiKey.length > 4096) {
+				return error(id, "auth_set", "apiKey is required (max 4096 chars)");
+			}
+			authStorage.set(provider, { type: "api_key", key: apiKey });
+			authStorage.reload();
+			registry.refresh();
+			return success(id, "auth_set", { providers: authStorage.list() });
+		}
+
+		case "auth_remove": {
+			const registry = facade.modelRegistry;
+			const authStorage = registry?.authStorage;
+			if (!authStorage) {
+				return error(id, "auth_remove", "Auth storage is not available");
+			}
+			const provider = typeof command.provider === "string" ? command.provider.trim() : "";
+			if (!provider) {
+				return error(id, "auth_remove", "provider is required");
+			}
+			authStorage.remove(provider);
+			authStorage.reload();
+			registry.refresh();
+			return success(id, "auth_remove", { providers: authStorage.list() });
+		}
+
 		case "get_persona": {
 			// Personified GUI support: expose the main-agent identity (SOUL.md)
 			// and the user's long-term memory (user-profile.md + siblings) so a

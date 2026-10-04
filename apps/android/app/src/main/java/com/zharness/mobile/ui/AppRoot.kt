@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zharness.mobile.data.protocol.ModelInfoDto
 import com.zharness.mobile.ui.screens.ChatScreen
+import com.zharness.mobile.ui.screens.ProviderConfigScreen
 import com.zharness.mobile.ui.screens.ServersScreen
 import com.zharness.mobile.ui.screens.TimelineScreen
 
@@ -69,16 +70,26 @@ fun AppRoot(
 		if (ui.activeProfile == null) {
 			ServersScreen(vm)
 		} else {
-			Column(modifier = Modifier.fillMaxSize()) {
-				WorkspaceHeader(ui, onModelPicked = vm::setModel, onDisconnect = vm::disconnect)
-				Box(modifier = Modifier.weight(1f)) {
-					when (ui.selectedTab) {
-						Tab.CHAT -> ChatScreen(vm, ui)
-						Tab.TIMELINE -> TimelineScreen(ui)
-						Tab.SERVERS -> ServersScreen(vm, embedded = true)
+			var showProviders by remember { mutableStateOf(false) }
+			if (showProviders) {
+				ProviderConfigScreen(vm, onClose = { showProviders = false })
+			} else {
+				Column(modifier = Modifier.fillMaxSize()) {
+					WorkspaceHeader(
+						ui,
+						onModelPicked = vm::setModel,
+						onDisconnect = vm::disconnect,
+						onOpenProviders = { showProviders = true },
+					)
+					Box(modifier = Modifier.weight(1f)) {
+						when (ui.selectedTab) {
+							Tab.CHAT -> ChatScreen(vm, ui)
+							Tab.TIMELINE -> TimelineScreen(ui)
+							Tab.SERVERS -> ServersScreen(vm, embedded = true)
+						}
 					}
+					BottomTabs(ui.selectedTab, onSelect = vm::selectTab)
 				}
-				BottomTabs(ui.selectedTab, onSelect = vm::selectTab)
 			}
 		}
 	}
@@ -104,12 +115,13 @@ private fun BottomTabs(current: Tab, onSelect: (Tab) -> Unit) {
 	}
 }
 
-/** Status dot + workspace + model/thinking pickers + disconnect. */
+/** Status dot + workspace + model/thinking pickers + provider keys + disconnect. */
 @Composable
 private fun WorkspaceHeader(
 	ui: AppViewModel.UiState,
 	onModelPicked: (ModelInfoDto) -> Unit,
 	onDisconnect: () -> Unit,
+	onOpenProviders: () -> Unit,
 ) {
 	var modelsMenu by remember { mutableStateOf(false) }
 	Row(
@@ -146,6 +158,9 @@ private fun WorkspaceHeader(
 				color = MaterialTheme.colorScheme.onSurfaceVariant,
 				maxLines = 1,
 			)
+		}
+		IconButton(onClick = onOpenProviders) {
+			Text(text = "密钥", style = MaterialTheme.typography.labelLarge)
 		}
 		IconButton(onClick = { modelsMenu = true }) {
 			Text(text = "模型", style = MaterialTheme.typography.labelLarge)

@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,6 +59,22 @@ fun ChatScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
 	}
 
 	Column(modifier = Modifier.fillMaxSize().imePadding()) {
+		// Engine errors (e.g. provider without an API key) surface here instead
+		// of vanishing into the timeline.
+		ui.error?.let { error ->
+			Row(
+				modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+				verticalAlignment = Alignment.CenterVertically,
+			) {
+				Text(
+					text = error,
+					color = MaterialTheme.colorScheme.error,
+					style = MaterialTheme.typography.bodySmall,
+					modifier = Modifier.weight(1f),
+				)
+				TextButton(onClick = vm::dismissError) { Text("知道了") }
+			}
+		}
 		Box(modifier = Modifier.weight(1f)) {
 			LazyColumn(
 				state = listState,

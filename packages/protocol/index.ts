@@ -619,6 +619,11 @@ export type RpcCommand =
 	// desktop bridge edits auth.json out-of-band, so a model switch picks up the
 	// new key instead of the stale in-memory cache or an env-var fallback).
 	| { id?: string; type: "reload_providers" }
+	// Mobile clients can't edit auth.json out-of-band (different sandbox), so
+	// they set/remove provider API keys through the bridge. Keys live only in
+	// the engine's auth.json — never on the phone.
+	| { id?: string; type: "auth_set"; provider: string; apiKey: string }
+	| { id?: string; type: "auth_remove"; provider: string }
 	// Persona: main-agent identity (SOUL.md) + user long-term memory
 	// (user-profile.md) for the personified GUI. Read-only.
 	| { id?: string; type: "get_persona" }
@@ -1047,6 +1052,8 @@ export type RpcResponse =
 	| { id?: string; type: "response"; command: "sop_install"; success: true; data: { slug: string; ok: boolean; message: string } }
 	| { id?: string; type: "response"; command: "sop_uninstall"; success: true; data: { slug: string; ok: boolean; message: string } }
 	| { id?: string; type: "response"; command: "reload_providers"; success: true; data: { providers: string[] } }
+	| { id?: string; type: "response"; command: "auth_set"; success: true; data: { providers: string[] } }
+	| { id?: string; type: "response"; command: "auth_remove"; success: true; data: { providers: string[] } }
 	| { id?: string; type: "response"; command: "get_persona"; success: true; data: RpcPersonaData }
 	// Context editor
 	| { id?: string; type: "response"; command: "context_preview"; success: true; data: RpcContextPreviewData }

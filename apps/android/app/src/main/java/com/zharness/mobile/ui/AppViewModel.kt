@@ -99,6 +99,19 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 	private fun handleEvent(event: JsonObject) {
 		val type = Protocol.str(event, "type") ?: return
 		val sequence = Protocol.long(event, "sequence")
+
+		// Engine-side failures must never vanish silently: surface them as a
+		// banner (e.g. "no API key configured" when prompting an unconfigured
+		// provider — the classic local-mode first-run case).
+		if (type in ERROR_EVENTS) {
+			val payload = Protocol.obj(event["payload"])
+			val detail = Protocol.str(payload, "message")
+				?: Protocol.str(payload, "error")
+				?: Protocol.str(payload, "text")
+				?: Protocol.eventSummary(event["payload"])
+			_ui.update { it.copy(error = "引擎报错（$type）: ${detail.take(200)}") }
+		}
+
 		val timelineEvent = TimelineEvent(
 			sequence = sequence,
 			type = type,
@@ -412,6 +425,43 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 		}
 	}
 
+	/**
+	 * Persist a provider API key to the ENGINE's auth.json (local mode: the
+	 * phone's Termux; remote mode: the host). The key is never stored on the
+	 * Android side — it is sent once over the (already authenticated) channel.
+	 */
+	fun setApiKey(provider: String, apiKey: String) {
+		if (provider.isBlank() || apiKey.isBlank()) return
+		_ui.update { it.copy(busy = "保存密钥中…") }
+		viewModelScope.launch {
+			try {
+				val fields = buildJsonObject {
+					put("provider", provider.trim())
+					put("apiKey", apiKey.trim())
+				}
+				client.command("auth_set", fields)
+				refreshModels()
+				_ui.update { it.copy(busy = null, error = null) }
+			} catch (error: Exception) {
+				_ui.update { it.copy(busy = null, error = error.message ?: "保存失败") }
+			}
+		}
+	}
+
+	fun removeApiKey(provider: String) {
+		_ui.update { it.copy(busy = "移除密钥中…") }
+		viewModelScope.launch {
+			try {
+				val fields = buildJsonObject { put("provider", provider.trim()) }
+				client.command("auth_remove", fields)
+				refreshModels()
+				_ui.update { it.copy(busy = null) }
+			} catch (error: Exception) {
+				_ui.update { it.copy(busy = null, error = error.message ?: "移除失败") }
+			}
+		}
+	}
+
 	companion object {
 		private const val MAX_BUFFERED_EVENTS = 3000
 		private const val RESYNC_LIMIT = 2000
@@ -425,6 +475,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 			"FILE_MUTATION_APPLIED",
 			"COMMAND_EXECUTED",
 			"MODEL_CHANGED",
+		)
+
+		/** Engine failures that should be surfaced as a banner, not buried in the log. */
+		private val ERROR_EVENTS = setOf(
+			"AGENT_ERROR",
+			"LLM_CALL_FAILED",
+			"RUNTIME_ERROR",
 		)
 	}
 }
