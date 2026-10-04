@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zharness.mobile.data.protocol.NamedEntry
 import com.zharness.mobile.data.protocol.ScheduleTask
+import com.zharness.mobile.data.EngineHub
 import com.zharness.mobile.ui.AppViewModel
 
 /**
@@ -75,7 +76,7 @@ fun ToolboxScreen(vm: AppViewModel, onOpen: (String) -> Unit) {
 // ============================================================================
 
 @Composable
-fun ScheduleScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
+fun ScheduleScreen(vm: AppViewModel, ui: EngineHub.UiState) {
 	var name by remember { mutableStateOf("") }
 	var prompt by remember { mutableStateOf("") }
 	var hour by remember { mutableStateOf("9") }
@@ -153,7 +154,7 @@ private fun ScheduleRow(vm: AppViewModel, task: ScheduleTask) {
 // ============================================================================
 
 @Composable
-fun SopScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
+fun SopScreen(vm: AppViewModel, ui: EngineHub.UiState) {
 	LaunchedEffect(Unit) { vm.loadSops() }
 	EntryListScreen(
 		entries = ui.sops,
@@ -166,7 +167,7 @@ fun SopScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
 }
 
 @Composable
-fun SkillsScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
+fun SkillsScreen(vm: AppViewModel, ui: EngineHub.UiState) {
 	LaunchedEffect(Unit) { vm.loadSkills() }
 	var source by remember { mutableStateOf("") }
 	var slug by remember { mutableStateOf("") }
@@ -199,7 +200,7 @@ fun SkillsScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
 }
 
 @Composable
-fun ExtensionsScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
+fun ExtensionsScreen(vm: AppViewModel, ui: EngineHub.UiState) {
 	LaunchedEffect(Unit) { vm.loadExtensions() }
 	Column(modifier = Modifier.fillMaxSize().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
 		Text("扩展启停立即生效；带外部依赖的扩展可安装/卸载其依赖", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

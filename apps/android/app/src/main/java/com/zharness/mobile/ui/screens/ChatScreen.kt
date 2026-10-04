@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zharness.mobile.data.protocol.ChatMessage
+import com.zharness.mobile.data.EngineHub
 import com.zharness.mobile.ui.AppViewModel
 
 /**
@@ -48,7 +49,7 @@ import com.zharness.mobile.ui.AppViewModel
  * boundaries. Safe-mode approval cards appear above the composer.
  */
 @Composable
-fun ChatScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
+fun ChatScreen(vm: AppViewModel, ui: EngineHub.UiState) {
 	var draft by remember { mutableStateOf("") }
 	val listState = rememberLazyListState()
 	val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->

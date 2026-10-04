@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.zharness.mobile.data.protocol.TimelineEvent
+import com.zharness.mobile.data.EngineHub
 import com.zharness.mobile.ui.AppViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -49,7 +50,7 @@ private fun matchesFilter(type: String, filter: String): Boolean = when (filter)
  * is one event; the log itself stays on the host, this is a projection.
  */
 @Composable
-fun TimelineScreen(ui: AppViewModel.UiState) {
+fun TimelineScreen(ui: EngineHub.UiState) {
 	var filter by remember { mutableStateOf("全部") }
 	val visible = ui.events.filter { matchesFilter(it.type, filter) }.asReversed()
 

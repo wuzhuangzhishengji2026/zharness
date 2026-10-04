@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.zharness.mobile.data.EngineHub
 import com.zharness.mobile.ui.AppViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -34,7 +35,7 @@ import java.util.Locale
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SessionsScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
+fun SessionsScreen(vm: AppViewModel, ui: EngineHub.UiState) {
 	var showBranches by remember { mutableStateOf(false) }
 
 	LaunchedEffect(showBranches) {

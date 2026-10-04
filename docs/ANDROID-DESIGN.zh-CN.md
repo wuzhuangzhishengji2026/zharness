@@ -3,7 +3,8 @@
 > 状态：**全量版已实现**（M0+M1+M2 主体+M3）· 2026-10
 > 引擎侧：`zharness serve`（`packages/serve/server.ts`）+ `auth_set`/`auth_remove`（服务商密钥配置）+ `get_events.sinceSequence` 增量同步；测试 `test/serve-mode.test.ts`。
 > 安卓侧（`apps/android`）：配对（粘贴 URI/手输）、对话（流式/steer/中止/图片附件）、审批流（安全模式 + INTENT_TOOL_CALL 审批卡 + approve/reject）、时间线（实时+过滤+resync 游标）、会话切换/新建、分支树分叉、回放播放器、计划任务 CRUD、SOP 市场、技能安装、扩展启停、皮肤应用、宠物盲盒互动、服务商密钥配置、报错横幅、文件离线镜像（FileMirror，断网回看，resync 自愈）。
-> 剩余项（诚实清单）：前台服务保活 + 系统通知推送（后台在线）、桌面 Widget、扫码配对、xterm 终端、TLS 证书固定——见 §09 里程碑与 §11 交付说明。
+> 前台服务保活 + 系统通知（审批/报错/完工，App 前台时自动抑制）已实现：连接与状态提升为进程级 EngineHub 单例，EngineService（dataSync 前台服务）持有常驻通知；Android 15 对 dataSync 类服务有 6 小时会话上限，超时后回到「重连 + 离线镜像」兜底。
+剩余项（诚实清单）：桌面 Widget、扫码配对、xterm 终端、TLS 证书固定。
 > 构建与联调：[apps/android/README.md](../apps/android/README.md)。
 
 ---

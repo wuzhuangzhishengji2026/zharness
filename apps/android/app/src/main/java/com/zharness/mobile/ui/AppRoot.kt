@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zharness.mobile.data.EngineHub
 import com.zharness.mobile.data.protocol.ModelInfoDto
 import com.zharness.mobile.ui.screens.ChatScreen
 import com.zharness.mobile.ui.screens.ExtensionsScreen
@@ -149,7 +150,7 @@ private fun BottomTabs(current: Tab, onSelect: (Tab) -> Unit) {
 /** Status dot + workspace + sessions/model keys pickers + disconnect. */
 @Composable
 private fun WorkspaceHeader(
-	ui: AppViewModel.UiState,
+	ui: EngineHub.UiState,
 	onModelPicked: (ModelInfoDto) -> Unit,
 	onDisconnect: () -> Unit,
 	onOpenProviders: () -> Unit,

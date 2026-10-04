@@ -19,13 +19,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.zharness.mobile.data.EngineHub
 import com.zharness.mobile.ui.AppViewModel
 
 /**
  * 皮肤与宠物：应用主题皮肤（引擎侧投影生效）、盲盒孵化宠物、喂食/玩耍互动。
  */
 @Composable
-fun SkinPetScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
+fun SkinPetScreen(vm: AppViewModel, ui: EngineHub.UiState) {
 	LaunchedEffect(Unit) {
 		vm.loadSkins()
 		vm.loadPet()

@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.zharness.mobile.data.EngineHub
 import com.zharness.mobile.ui.AppViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -28,7 +29,7 @@ import java.util.Locale
  * 已在 VM 过滤（REPLAY_VISIBLE）。
  */
 @Composable
-fun ReplayScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
+fun ReplayScreen(vm: AppViewModel, ui: EngineHub.UiState) {
 	LaunchedEffect(Unit) { vm.loadReplayList() }
 
 	Column(modifier = Modifier.fillMaxSize().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
