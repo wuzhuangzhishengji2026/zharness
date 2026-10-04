@@ -1,5 +1,7 @@
 package com.zharness.mobile.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,12 +17,17 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,12 +45,15 @@ import com.zharness.mobile.ui.AppViewModel
 /**
  * Conversation view — messages are a projection of the event log, streamed
  * live via AGENT_MESSAGE_CHUNK and reconciled from get_messages at turn
- * boundaries.
+ * boundaries. Safe-mode approval cards appear above the composer.
  */
 @Composable
 fun ChatScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
 	var draft by remember { mutableStateOf("") }
 	val listState = rememberLazyListState()
+	val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+		uri?.let { vm.attachImage(it) }
+	}
 
 	// Share-to-agent: pre-fill the composer once per incoming share.
 	LaunchedEffect(ui.pendingShare) {
@@ -75,6 +85,45 @@ fun ChatScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
 				TextButton(onClick = vm::dismissError) { Text("知道了") }
 			}
 		}
+
+		// Safe-mode approval cards: engine is paused waiting for a decision.
+		if (ui.pendingApprovals.isNotEmpty()) {
+			Card(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(horizontal = 12.dp, vertical = 4.dp),
+			) {
+				Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+					Row(
+						modifier = Modifier.fillMaxWidth(),
+						horizontalArrangement = Arrangement.SpaceBetween,
+						verticalAlignment = Alignment.CenterVertically,
+					) {
+						Text("安全模式 · 等待审批", style = MaterialTheme.typography.titleSmall)
+						Switch(checked = ui.safeMode, onCheckedChange = { vm.toggleSafeMode() })
+					}
+					ui.pendingApprovals.take(3).forEach { approval ->
+						Column {
+							Text("🔧 ${approval.toolName}", style = MaterialTheme.typography.titleSmall)
+							Text(
+								approval.argumentsSummary.take(160),
+								style = MaterialTheme.typography.bodySmall,
+								color = MaterialTheme.colorScheme.onSurfaceVariant,
+								maxLines = 2,
+							)
+							Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+								Button(onClick = { vm.approve(approval.eventId) }) { Text("允许") }
+								OutlinedButton(onClick = { vm.reject(approval.eventId) }) { Text("拒绝") }
+							}
+						}
+					}
+					if (ui.pendingApprovals.size > 3) {
+						Text("…另有 ${ui.pendingApprovals.size - 3} 个待审批", style = MaterialTheme.typography.bodySmall)
+					}
+				}
+			}
+		}
+
 		Box(modifier = Modifier.weight(1f)) {
 			LazyColumn(
 				state = listState,
@@ -84,7 +133,7 @@ fun ChatScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
 				if (ui.messages.isEmpty() && ui.streamText.isEmpty()) {
 					item {
 						Text(
-							text = "连接已建立。这里是事件日志的最新投影——发送一条消息开始，任何历史都可以在主机端分叉。",
+							text = "连接已建立。这里是事件日志的最新投影——发送一条消息开始，任何历史都可以在「会话 → 分支树」里分叉。",
 							style = MaterialTheme.typography.bodyMedium,
 							color = MaterialTheme.colorScheme.onSurfaceVariant,
 							modifier = Modifier.padding(vertical = 24.dp),
@@ -104,8 +153,12 @@ fun ChatScreen(vm: AppViewModel, ui: AppViewModel.UiState) {
 			onDraftChange = { draft = it },
 			busy = ui.isStreaming,
 			enabled = ui.connected,
+			imageCount = ui.attachedImages.size,
+			onPickImage = { imagePicker.launch("image/*") },
+			onClearImages = vm::clearAttachedImages,
 			onSend = {
-				vm.sendPrompt(draft)
+				vm.sendPrompt(draft, ui.attachedImages)
+				vm.clearAttachedImages()
 				draft = ""
 			},
 			onAbort = vm::abort,
@@ -153,31 +206,48 @@ private fun Composer(
 	onDraftChange: (String) -> Unit,
 	busy: Boolean,
 	enabled: Boolean,
+	imageCount: Int,
+	onPickImage: () -> Unit,
+	onClearImages: () -> Unit,
 	onSend: () -> Unit,
 	onAbort: () -> Unit,
 ) {
-	Row(
-		modifier = Modifier
-			.fillMaxWidth()
-			.background(MaterialTheme.colorScheme.surface)
-			.padding(horizontal = 10.dp, vertical = 8.dp),
-		verticalAlignment = Alignment.Bottom,
-		horizontalArrangement = Arrangement.spacedBy(6.dp),
-	) {
-		OutlinedTextField(
-			value = draft,
-			onValueChange = onDraftChange,
-			modifier = Modifier.weight(1f),
-			placeholder = { Text(if (enabled) "给 Agent 发消息…" else "未连接") },
-			enabled = enabled,
-			maxLines = 5,
-			shape = RoundedCornerShape(14.dp),
-		)
-		IconButton(onClick = if (busy) onAbort else onSend, enabled = enabled && (draft.isNotBlank() || busy)) {
-			if (busy) {
-				Icon(Icons.Filled.Stop, contentDescription = "中止", tint = MaterialTheme.colorScheme.error)
-			} else {
-				Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "发送")
+	Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+		if (imageCount > 0) {
+			Row(
+				modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+				horizontalArrangement = Arrangement.SpaceBetween,
+				verticalAlignment = Alignment.CenterVertically,
+			) {
+				Text("已附加 $imageCount 张图片", style = MaterialTheme.typography.bodySmall)
+				TextButton(onClick = onClearImages) { Text("移除") }
+			}
+		}
+		Row(
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(horizontal = 10.dp, vertical = 8.dp),
+			verticalAlignment = Alignment.Bottom,
+			horizontalArrangement = Arrangement.spacedBy(6.dp),
+		) {
+			IconButton(onClick = onPickImage, enabled = enabled) {
+				Icon(Icons.Filled.AddAPhoto, contentDescription = "附加图片")
+			}
+			OutlinedTextField(
+				value = draft,
+				onValueChange = onDraftChange,
+				modifier = Modifier.weight(1f),
+				placeholder = { Text(if (enabled) "给 Agent 发消息…" else "未连接") },
+				enabled = enabled,
+				maxLines = 5,
+				shape = RoundedCornerShape(14.dp),
+			)
+			IconButton(onClick = if (busy) onAbort else onSend, enabled = enabled && (draft.isNotBlank() || imageCount > 0 || busy)) {
+				if (busy) {
+					Icon(Icons.Filled.Stop, contentDescription = "中止", tint = MaterialTheme.colorScheme.error)
+				} else {
+					Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "发送")
+				}
 			}
 		}
 	}

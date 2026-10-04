@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -36,20 +37,27 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zharness.mobile.data.protocol.ModelInfoDto
 import com.zharness.mobile.ui.screens.ChatScreen
+import com.zharness.mobile.ui.screens.ExtensionsScreen
 import com.zharness.mobile.ui.screens.ProviderConfigScreen
+import com.zharness.mobile.ui.screens.ReplayScreen
+import com.zharness.mobile.ui.screens.ScheduleScreen
+import com.zharness.mobile.ui.screens.SessionsScreen
 import com.zharness.mobile.ui.screens.ServersScreen
+import com.zharness.mobile.ui.screens.SkillsScreen
+import com.zharness.mobile.ui.screens.SkinPetScreen
+import com.zharness.mobile.ui.screens.SopScreen
 import com.zharness.mobile.ui.screens.TimelineScreen
+import com.zharness.mobile.ui.screens.ToolboxScreen
 
-enum class Tab(val label: String) {
-	CHAT("对话"),
-	TIMELINE("时间线"),
-	SERVERS("服务器"),
+/** Toolbox 二级页路由（AppRoot 内部导航状态）。 */
+enum class Overlay {
+	NONE, PROVIDERS, SESSIONS, SCHEDULE, SOP, SKILLS, EXTENSIONS, SKINPET, REPLAY,
 }
 
 /**
  * Root shell: server picker when unpaired, otherwise a bottom-tab workspace
- * (chat / timeline / servers). The ViewModel is scoped to the activity, so a
- * reconnect on rotation costs nothing.
+ * (chat / timeline / toolbox / servers) with full-screen overlays. The
+ * ViewModel is scoped to the activity, so a reconnect on rotation costs nothing.
  */
 @Composable
 fun AppRoot(
@@ -58,6 +66,7 @@ fun AppRoot(
 	vm: AppViewModel = viewModel(),
 ) {
 	val ui by vm.ui.collectAsState()
+	var overlay by remember { mutableStateOf(Overlay.NONE) }
 
 	LaunchedEffect(initialShare) {
 		if (initialShare != null) vm.setPendingShare(initialShare)
@@ -69,27 +78,48 @@ fun AppRoot(
 	Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
 		if (ui.activeProfile == null) {
 			ServersScreen(vm)
-		} else {
-			var showProviders by remember { mutableStateOf(false) }
-			if (showProviders) {
-				ProviderConfigScreen(vm, onClose = { showProviders = false })
-			} else {
-				Column(modifier = Modifier.fillMaxSize()) {
-					WorkspaceHeader(
-						ui,
-						onModelPicked = vm::setModel,
-						onDisconnect = vm::disconnect,
-						onOpenProviders = { showProviders = true },
-					)
-					Box(modifier = Modifier.weight(1f)) {
-						when (ui.selectedTab) {
-							Tab.CHAT -> ChatScreen(vm, ui)
-							Tab.TIMELINE -> TimelineScreen(ui)
-							Tab.SERVERS -> ServersScreen(vm, embedded = true)
-						}
-					}
-					BottomTabs(ui.selectedTab, onSelect = vm::selectTab)
+		} else if (overlay != Overlay.NONE) {
+			Box(modifier = Modifier.fillMaxSize()) {
+				when (overlay) {
+					Overlay.PROVIDERS -> ProviderConfigScreen(vm, onClose = { overlay = Overlay.NONE })
+					Overlay.SESSIONS -> SessionsScreen(vm, ui)
+					Overlay.SCHEDULE -> ScheduleScreen(vm, ui)
+					Overlay.SOP -> SopScreen(vm, ui)
+					Overlay.SKILLS -> SkillsScreen(vm, ui)
+					Overlay.EXTENSIONS -> ExtensionsScreen(vm, ui)
+					Overlay.SKINPET -> SkinPetScreen(vm, ui)
+					Overlay.REPLAY -> ReplayScreen(vm, ui)
+					Overlay.NONE -> {}
 				}
+			}
+		} else {
+			Column(modifier = Modifier.fillMaxSize()) {
+				WorkspaceHeader(
+					ui,
+					onModelPicked = vm::setModel,
+					onDisconnect = vm::disconnect,
+					onOpenProviders = { overlay = Overlay.PROVIDERS },
+					onOpenSessions = { overlay = Overlay.SESSIONS },
+				)
+				Box(modifier = Modifier.weight(1f)) {
+					when (ui.selectedTab) {
+						Tab.CHAT -> ChatScreen(vm, ui)
+						Tab.TIMELINE -> TimelineScreen(ui)
+						Tab.TOOLBOX -> ToolboxScreen(vm, onOpen = { route ->
+							overlay = when (route) {
+								"schedule" -> Overlay.SCHEDULE
+								"sop" -> Overlay.SOP
+								"skills" -> Overlay.SKILLS
+								"extensions" -> Overlay.EXTENSIONS
+								"skinpet" -> Overlay.SKINPET
+								"replay" -> Overlay.REPLAY
+								else -> Overlay.NONE
+							}
+						})
+						Tab.SERVERS -> ServersScreen(vm, embedded = true)
+					}
+				}
+				BottomTabs(ui.selectedTab, onSelect = vm::selectTab)
 			}
 		}
 	}
@@ -106,6 +136,7 @@ private fun BottomTabs(current: Tab, onSelect: (Tab) -> Unit) {
 					when (tab) {
 						Tab.CHAT -> Icon(Icons.Filled.ChatBubble, contentDescription = tab.label)
 						Tab.TIMELINE -> Icon(Icons.Filled.AccountTree, contentDescription = tab.label)
+						Tab.TOOLBOX -> Icon(Icons.Filled.Widgets, contentDescription = tab.label)
 						Tab.SERVERS -> Icon(Icons.Filled.Dns, contentDescription = tab.label)
 					}
 				},
@@ -115,13 +146,14 @@ private fun BottomTabs(current: Tab, onSelect: (Tab) -> Unit) {
 	}
 }
 
-/** Status dot + workspace + model/thinking pickers + provider keys + disconnect. */
+/** Status dot + workspace + sessions/model keys pickers + disconnect. */
 @Composable
 private fun WorkspaceHeader(
 	ui: AppViewModel.UiState,
 	onModelPicked: (ModelInfoDto) -> Unit,
 	onDisconnect: () -> Unit,
 	onOpenProviders: () -> Unit,
+	onOpenSessions: () -> Unit,
 ) {
 	var modelsMenu by remember { mutableStateOf(false) }
 	Row(
@@ -151,13 +183,18 @@ private fun WorkspaceHeader(
 				maxLines = 1,
 			)
 			Text(
-				text = listOfNotNull(ui.currentModel, ui.thinkingLevel?.let { "thinking:$it" })
-					.joinToString(" · ")
-					.ifEmpty { "未连接" },
+				text = listOfNotNull(
+					ui.currentModel,
+					ui.thinkingLevel?.let { "thinking:$it" },
+					if (ui.safeMode) "安全模式" else null,
+				).joinToString(" · ").ifEmpty { "未连接" },
 				style = MaterialTheme.typography.bodySmall,
 				color = MaterialTheme.colorScheme.onSurfaceVariant,
 				maxLines = 1,
 			)
+		}
+		IconButton(onClick = onOpenSessions) {
+			Text(text = "会话", style = MaterialTheme.typography.labelLarge)
 		}
 		IconButton(onClick = onOpenProviders) {
 			Text(text = "密钥", style = MaterialTheme.typography.labelLarge)
