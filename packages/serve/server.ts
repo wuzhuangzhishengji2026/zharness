@@ -100,7 +100,10 @@ interface LooseRpcResponse {
 // Constants
 // ============================================================================
 
-const PAIRING_CODE_TTL_MS = 5 * 60 * 1000;
+// Pairing code lifetime. Codes are single-use (consumed on any attempt), so a
+// long window is safe on a trusted LAN; override via ZHARNESS_PAIRING_TTL_MINUTES.
+const PAIRING_CODE_TTL_MS =
+	Math.max(1, Number(process.env.ZHARNESS_PAIRING_TTL_MINUTES ?? 30) || 30) * 60 * 1000;
 const MAX_PAIRING_ATTEMPTS_PER_SOCKET = 5;
 const MAX_FRAME_BYTES = 10 * 1024 * 1024;
 const RESYNC_MAX_LIMIT = 5000;
@@ -529,7 +532,7 @@ export async function runServeServer(options: ServeServerOptions): Promise<Serve
 	} else if (lanIps.length > 1) {
 		console.log(`[serve]   其他候选 IP: ${lanIps.slice(1).join(", ")}`);
 	}
-	console.log(`[serve]   pairing code (valid 5 min, single use): ${issued.code}`);
+	console.log(`[serve]   pairing code (valid ${Math.round(PAIRING_CODE_TTL_MS / 60000)} min, single use): ${issued.code}`);
 	options.onReady?.({ host, port: boundPort });
 	options.onPairingCode?.({ code: issued.code, host, port: boundPort, expiresAt: issued.expiresAt });
 	return handle;
@@ -569,7 +572,7 @@ function handleHttp(
 <h1>ZHarness pairing</h1>
 <p>Workspace: <code>${privateName(context.cwd)}</code></p>
 ${code
-	? `<p>Pairing code: <strong style="font-size:2rem">${code.code}</strong> (valid 5 minutes, single use)</p>
+	? `<p>Pairing code: <strong style="font-size:2rem">${code.code}</strong> (valid ${Math.round(PAIRING_CODE_TTL_MS / 60000)} minutes, single use)</p>
 	   <p>In the ZHarness Android app choose <em>Add server</em> and enter this code along with the host and port ${url.port}.</p>`
 	: `<p>No active pairing code. Run <code>zharness serve</code> on the host to issue one.</p>`}
 </body>`);

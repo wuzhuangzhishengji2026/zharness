@@ -1,5 +1,6 @@
 package com.zharness.mobile.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,11 +10,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountTree
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -55,10 +62,24 @@ enum class Overlay {
 	NONE, PROVIDERS, SESSIONS, SCHEDULE, SOP, SKILLS, EXTENSIONS, SKINPET, REPLAY,
 }
 
+private fun overlayTitle(overlay: Overlay): String = when (overlay) {
+	Overlay.PROVIDERS -> "模型服务配置"
+	Overlay.SESSIONS -> "会话与分支"
+	Overlay.SCHEDULE -> "计划任务"
+	Overlay.SOP -> "SOP 市场"
+	Overlay.SKILLS -> "技能"
+	Overlay.EXTENSIONS -> "扩展"
+	Overlay.SKINPET -> "皮肤与宠物"
+	Overlay.REPLAY -> "回放"
+	Overlay.NONE -> ""
+}
+
 /**
- * Root shell: server picker when unpaired, otherwise a bottom-tab workspace
- * (chat / timeline / toolbox / servers) with full-screen overlays. The
- * ViewModel is scoped to the activity, so a reconnect on rotation costs nothing.
+ * Root shell: server picker when unpaired; otherwise a bottom-tab workspace
+ * (chat / timeline / toolbox / servers) with full-screen overlay pages that
+ * carry their own back header and honor the system back gesture. All engine
+ * state lives in the process-level EngineHub, so this composable is a pure
+ * projection.
  */
 @Composable
 fun AppRoot(
@@ -68,6 +89,7 @@ fun AppRoot(
 ) {
 	val ui by vm.ui.collectAsState()
 	var overlay by remember { mutableStateOf(Overlay.NONE) }
+	BackHandler(enabled = overlay != Overlay.NONE) { overlay = Overlay.NONE }
 
 	LaunchedEffect(initialShare) {
 		if (initialShare != null) vm.setPendingShare(initialShare)
@@ -76,21 +98,27 @@ fun AppRoot(
 		if (initialPairUri != null) vm.setPendingPairUri(initialPairUri)
 	}
 
-	Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+	Surface(
+		modifier = Modifier.fillMaxSize().statusBarsPadding(),
+		color = MaterialTheme.colorScheme.background,
+	) {
 		if (ui.activeProfile == null) {
 			ServersScreen(vm)
 		} else if (overlay != Overlay.NONE) {
-			Box(modifier = Modifier.fillMaxSize()) {
-				when (overlay) {
-					Overlay.PROVIDERS -> ProviderConfigScreen(vm, onClose = { overlay = Overlay.NONE })
-					Overlay.SESSIONS -> SessionsScreen(vm, ui)
-					Overlay.SCHEDULE -> ScheduleScreen(vm, ui)
-					Overlay.SOP -> SopScreen(vm, ui)
-					Overlay.SKILLS -> SkillsScreen(vm, ui)
-					Overlay.EXTENSIONS -> ExtensionsScreen(vm, ui)
-					Overlay.SKINPET -> SkinPetScreen(vm, ui)
-					Overlay.REPLAY -> ReplayScreen(vm, ui)
-					Overlay.NONE -> {}
+			Column(modifier = Modifier.fillMaxSize()) {
+				OverlayHeader(title = overlayTitle(overlay), onBack = { overlay = Overlay.NONE })
+				Box(modifier = Modifier.fillMaxSize()) {
+					when (overlay) {
+						Overlay.PROVIDERS -> ProviderConfigScreen(vm, onClose = { overlay = Overlay.NONE })
+						Overlay.SESSIONS -> SessionsScreen(vm, ui)
+						Overlay.SCHEDULE -> ScheduleScreen(vm, ui)
+						Overlay.SOP -> SopScreen(vm, ui)
+						Overlay.SKILLS -> SkillsScreen(vm, ui)
+						Overlay.EXTENSIONS -> ExtensionsScreen(vm, ui)
+						Overlay.SKINPET -> SkinPetScreen(vm, ui)
+						Overlay.REPLAY -> ReplayScreen(vm, ui)
+						Overlay.NONE -> {}
+					}
 				}
 			}
 		} else {
@@ -126,6 +154,23 @@ fun AppRoot(
 	}
 }
 
+/** 二级页统一返回栏：返回箭头 + 标题，配 BackHandler 接管系统返回键。 */
+@Composable
+private fun OverlayHeader(title: String, onBack: () -> Unit) {
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.background(MaterialTheme.colorScheme.surface)
+			.padding(horizontal = 4.dp, vertical = 2.dp),
+		verticalAlignment = Alignment.CenterVertically,
+	) {
+		IconButton(onClick = onBack) {
+			Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+		}
+		Text(title, style = MaterialTheme.typography.titleMedium)
+	}
+}
+
 @Composable
 private fun BottomTabs(current: Tab, onSelect: (Tab) -> Unit) {
 	NavigationBar {
@@ -147,7 +192,7 @@ private fun BottomTabs(current: Tab, onSelect: (Tab) -> Unit) {
 	}
 }
 
-/** Status dot + workspace + sessions/model keys pickers + disconnect. */
+/** 状态点 + 工作区信息 + 会话/密钥/模型/断开（图标按钮，窄屏不拥挤）。 */
 @Composable
 private fun WorkspaceHeader(
 	ui: EngineHub.UiState,
@@ -195,13 +240,13 @@ private fun WorkspaceHeader(
 			)
 		}
 		IconButton(onClick = onOpenSessions) {
-			Text(text = "会话", style = MaterialTheme.typography.labelLarge)
+			Icon(Icons.AutoMirrored.Filled.ListAlt, contentDescription = "会话与分支")
 		}
 		IconButton(onClick = onOpenProviders) {
-			Text(text = "密钥", style = MaterialTheme.typography.labelLarge)
+			Icon(Icons.Filled.Key, contentDescription = "模型服务密钥")
 		}
 		IconButton(onClick = { modelsMenu = true }) {
-			Text(text = "模型", style = MaterialTheme.typography.labelLarge)
+			Icon(Icons.Filled.Tune, contentDescription = "切换模型")
 		}
 		DropdownMenu(expanded = modelsMenu, onDismissRequest = { modelsMenu = false }) {
 			if (ui.models.isEmpty()) {
@@ -225,7 +270,7 @@ private fun WorkspaceHeader(
 			}
 		}
 		IconButton(onClick = onDisconnect) {
-			Text(text = "断开", style = MaterialTheme.typography.labelLarge)
+			Icon(Icons.Filled.LinkOff, contentDescription = "断开连接")
 		}
 	}
 }

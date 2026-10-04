@@ -45,6 +45,7 @@ private data class ProviderGroup(
  */
 @Composable
 fun ProviderConfigScreen(vm: AppViewModel, onClose: () -> Unit) {
+		// onClose kept for API symmetry; the shared overlay header handles back.
 	val ui = vm.ui.collectAsState().value
 
 	// Group available models by provider; hasAuth reflects the engine side.
@@ -62,23 +63,12 @@ fun ProviderConfigScreen(vm: AppViewModel, onClose: () -> Unit) {
 	}
 
 	Column(modifier = Modifier.fillMaxSize()) {
-		Row(
-			modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 4.dp),
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			IconButton(onClick = onClose) {
-				Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-			}
-			Column {
-				Text("模型服务配置", style = MaterialTheme.typography.titleMedium)
-				Text(
-					text = "密钥保存在引擎侧（本机模式即手机 Termux），App 不存储",
-					style = MaterialTheme.typography.bodySmall,
-					color = MaterialTheme.colorScheme.onSurfaceVariant,
-				)
-			}
-		}
-		HorizontalDivider()
+		Text(
+			text = "密钥保存在引擎侧（本机模式即手机 Termux），App 不存储",
+			style = MaterialTheme.typography.bodySmall,
+			color = MaterialTheme.colorScheme.onSurfaceVariant,
+			modifier = Modifier.padding(horizontal = 14.dp),
+		)
 		Column(
 			modifier = Modifier
 				.fillMaxSize()
